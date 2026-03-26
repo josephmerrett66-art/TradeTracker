@@ -445,9 +445,64 @@ nav {
 }
 .cr-badge.target { background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.2); }
 .cr-badge.time { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow-border); }
+
+/* Import/export */
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.nav-io-btn {
+  padding: 5px 12px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  font-family: 'DM Mono', monospace; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); transition: all 0.15s;
+}
+.nav-io-btn.export { color: var(--green); border-color: rgba(61,214,140,0.25); background: var(--green-dim); }
+.nav-io-btn.export:hover { background: rgba(61,214,140,0.22); }
+.nav-io-btn.import { color: var(--blue); border-color: rgba(74,158,255,0.25); background: var(--blue-dim); }
+.nav-io-btn.import:hover { background: rgba(74,158,255,0.22); }
+
+/* Import modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 2rem; width: 480px; max-width: 92vw; display: flex; flex-direction: column; gap: 1.25rem; }
+.modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+.modal-sub { font-size: 13px; color: var(--text2); margin-top: -8px; line-height: 1.6; }
+.modal-drop { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg3); position: relative; }
+.modal-drop:hover, .modal-drop.drag { border-color: var(--blue); background: var(--blue-dim); }
+.modal-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.modal-drop-icon { font-size: 28px; margin-bottom: 8px; }
+.modal-drop-label { font-size: 13px; color: var(--text2); }
+.modal-drop-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: 'DM Mono', monospace; }
+.modal-status { font-size: 13px; font-family: 'DM Mono', monospace; padding: 10px 14px; border-radius: var(--radius-sm); display: none; }
+.modal-status.ok { display: block; background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.2); }
+.modal-status.err { display: block; background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn { padding: 9px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); font-family: 'Syne', sans-serif; transition: all 0.15s; }
+.modal-btn:hover { background: var(--bg4); color: var(--text); }
+.modal-btn.confirm { background: var(--blue); color: #fff; border-color: var(--blue); }
+.modal-btn.confirm:hover { background: #3a8eef; }
+.modal-btn.confirm:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
 </head>
 <body>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal" onclick="if(event.target===this)closeImport()">
+  <div class="modal">
+    <div class="modal-title">Import Trades</div>
+    <div class="modal-sub">Drop a previously exported <code style="font-family:'DM Mono',monospace;color:var(--yellow);font-size:12px">.json</code> file to restore your trades. You can choose to merge with existing data or replace it entirely.</div>
+    <div class="modal-drop" id="import-drop">
+      <input type="file" accept=".json,application/json" onchange="handleImportFile(this.files[0])" />
+      <div class="modal-drop-icon">📂</div>
+      <div class="modal-drop-label">Drop your backup file here</div>
+      <div class="modal-drop-sub">or click to browse · .json only</div>
+    </div>
+    <div class="modal-status" id="import-status"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeImport()">Cancel</button>
+      <button class="modal-btn confirm" id="import-merge-btn" onclick="confirmImport('merge')" disabled>Merge</button>
+      <button class="modal-btn confirm" id="import-replace-btn" onclick="confirmImport('replace')" disabled style="background:var(--yellow);border-color:var(--yellow);color:#0C0C0E">Replace All</button>
+    </div>
+  </div>
+</div>
 
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
@@ -462,7 +517,11 @@ nav {
     <button class="nav-tab" onclick="showPage('stats')">Stats</button>
     <button class="nav-tab" onclick="showPage('review')">AI Review</button>
   </div>
-  <div class="nav-badge" id="nav-count">0 trades</div>
+  <div class="nav-actions">
+    <button class="nav-io-btn import" onclick="openImport()">⬆ Import</button>
+    <button class="nav-io-btn export" onclick="exportData()">⬇ Export</button>
+    <div class="nav-badge" id="nav-count">0 trades</div>
+  </div>
 </nav>
 
 <!-- LOG PAGE -->
@@ -1517,6 +1576,116 @@ function closeLightbox() {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function exportData() {
+  const payload = {
+    version: 1,
+    exported: new Date().toISOString(),
+    starting_balance: getStartingBalance(),
+    trades: trades
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `fade-track-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── IMPORT ────────────────────────────────────────────────────────────────
+let _pendingImport = null;
+
+function openImport() {
+  _pendingImport = null;
+  document.getElementById('import-status').className = 'modal-status';
+  document.getElementById('import-status').textContent = '';
+  document.getElementById('import-merge-btn').disabled = true;
+  document.getElementById('import-replace-btn').disabled = true;
+  document.getElementById('import-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImport() {
+  document.getElementById('import-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _pendingImport = null;
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const status = document.getElementById('import-status');
+  if (!file.name.endsWith('.json')) {
+    status.textContent = '✕ File must be a .json export from FADE.TRACK';
+    status.className = 'modal-status err';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Accept both wrapped format (version:1) and raw array
+      const importedTrades = Array.isArray(data) ? data : (data.trades || []);
+      const importedBalance = data.starting_balance || null;
+      if (!Array.isArray(importedTrades) || !importedTrades.length) {
+        status.textContent = '✕ No trades found in this file.';
+        status.className = 'modal-status err';
+        return;
+      }
+      _pendingImport = { trades: importedTrades, balance: importedBalance };
+      status.textContent = `✓ Found ${importedTrades.length} trade${importedTrades.length!==1?'s':''} — choose Merge or Replace All below.`;
+      status.className = 'modal-status ok';
+      document.getElementById('import-merge-btn').disabled = false;
+      document.getElementById('import-replace-btn').disabled = false;
+    } catch {
+      status.textContent = '✕ Could not parse file. Make sure it\'s a valid FADE.TRACK export.';
+      status.className = 'modal-status err';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport(mode) {
+  if (!_pendingImport) return;
+  const { trades: incoming, balance } = _pendingImport;
+  if (mode === 'replace') {
+    if (!confirm(`Replace all ${trades.length} existing trade${trades.length!==1?'s':''} with ${incoming.length} imported trade${incoming.length!==1?'s':''}? This cannot be undone.`)) return;
+    trades = incoming;
+  } else {
+    // Merge: add only trades whose id doesn't already exist
+    const existingIds = new Set(trades.map(t => t.id));
+    const newOnes = incoming.filter(t => !existingIds.has(t.id));
+    trades = [...newOnes, ...trades];
+    // Sort by timestamp descending
+    trades.sort((a, b) => (b.ts || b.id) - (a.ts || a.id));
+    const skipped = incoming.length - newOnes.length;
+    if (skipped > 0) {
+      document.getElementById('import-status').textContent = `✓ Imported ${newOnes.length} new trade${newOnes.length!==1?'s':''}. ${skipped} duplicate${skipped!==1?'s':''} skipped.`;
+    }
+  }
+  if (balance !== null) {
+    saveStartingBalance(balance);
+  }
+  save();
+  renderTrades();
+  closeImport();
+}
+
+// Drag-and-drop on import modal
+document.addEventListener('DOMContentLoaded', () => {
+  const drop = document.getElementById('import-drop');
+  if (!drop) return;
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImportFile(file);
+  });
+});
 
 renderTrades();
 updateNavCount();
