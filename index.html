@@ -480,6 +480,133 @@ nav {
 .modal-btn.confirm { background: var(--blue); color: #fff; border-color: var(--blue); }
 .modal-btn.confirm:hover { background: #3a8eef; }
 .modal-btn.confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════
+   MOBILE — everything below 768px
+═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Bottom tab bar replaces top nav tabs */
+  body { padding-bottom: 70px; }
+
+  nav {
+    padding: 0 1rem; height: 52px;
+    justify-content: space-between;
+  }
+  .nav-tabs { display: none; }
+  .nav-actions { gap: 6px; }
+  .nav-io-btn { padding: 5px 9px; font-size: 11px; }
+  .nav-badge { display: none; }
+
+  .bottom-nav {
+    display: flex !important;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 62px; z-index: 100;
+    background: rgba(12,12,14,0.97);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bn-tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-family: 'DM Mono', monospace;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 4px; transition: color 0.15s; border-radius: 10px;
+  }
+  .bn-tab svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .bn-tab.active { color: var(--yellow); }
+  .bn-tab.active svg { stroke: var(--yellow); }
+
+  /* LOG PAGE — single column */
+  .log-layout { grid-template-columns: 1fr; min-height: auto; }
+  .panel-left {
+    border-right: none; border-bottom: 1px solid var(--border);
+    padding: 1rem; gap: 1rem;
+  }
+  .panel-right { padding: 1rem; }
+
+  .field-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field input, .field select { height: 44px; font-size: 16px; } /* prevent zoom on iOS */
+  .save-btn { height: 48px; font-size: 15px; }
+  .cr-btn { height: 44px; font-size: 13px; }
+
+  /* TRADE ROWS — card layout instead of grid */
+  .trade-row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 8px;
+    padding: 12px;
+  }
+  .trade-row > div:nth-child(2),
+  .trade-row > div:nth-child(3) { display: none; } /* hide entry/exit on mobile to save space */
+  .trade-row > div:nth-child(1) { grid-row: 1; grid-column: 1; }
+  .trade-row > div:nth-child(4) { grid-row: 1; } /* P&L % */
+  .trade-row > div:nth-child(5) { grid-row: 2; grid-column: 1; } /* P&L $ */
+  .trade-row > div:nth-child(6) { grid-row: 2; } /* badge */
+  .ss-actions { grid-row: 1 / span 2; grid-column: 2; justify-content: center; }
+  .tr-coin { font-size: 16px; }
+  .tr-meta { font-size: 11px; }
+
+  /* STATS PAGE */
+  .stats-page { padding: 1rem; }
+  .stats-heading { font-size: 22px; margin-bottom: 1rem; }
+  .kpi-grid-6 { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .kpi-grid-3 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi { padding: 12px; }
+  .kpi-val { font-size: 20px; }
+  .kpi-label { font-size: 9px; margin-bottom: 6px; }
+  .kpi-sub { font-size: 10px; }
+
+  .two-col { grid-template-columns: 1fr; gap: 10px; }
+  .three-col { grid-template-columns: 1fr; gap: 10px; }
+  .chart-card { padding: 1rem; }
+  .chart-title { font-size: 13px; margin-bottom: 1rem; }
+
+  .balance-row { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .balance-hint { display: none; }
+  .balance-input { width: 120px; }
+
+  .streak-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .streak-card { padding: 10px 8px; }
+  .streak-val { font-size: 18px; }
+  .split-row { flex-wrap: wrap; gap: 8px; }
+  .split-item { min-width: calc(50% - 4px); }
+
+  /* Ticker/bucket tables — hide less-critical columns */
+  .ticker-table th:nth-child(n+5),
+  .ticker-table td:nth-child(n+5) { display: none; }
+  .bucket-table th:last-child,
+  .bucket-table td:last-child { display: none; }
+
+  /* REVIEW PAGE */
+  .review-page { padding: 1rem; }
+  .review-heading { font-size: 20px; }
+  .review-sub { font-size: 12px; }
+  .review-layout { grid-template-columns: 1fr; gap: 12px; }
+  .prompt-sidebar {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .prompt-card { padding: 10px 12px; }
+  .pc-desc { display: none; }
+  .snapshot-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .po-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .po-actions { width: 100%; }
+  .po-btn { flex: 1; text-align: center; }
+  .prompt-text { font-size: 12px; min-height: 100px; padding: 1rem; }
+
+  /* MODAL */
+  .modal { padding: 1.25rem; }
+  .modal-title { font-size: 16px; }
+  .modal-actions { flex-direction: column; }
+  .modal-btn { width: 100%; text-align: center; }
+
+  /* Section label */
+  .section-label { margin: 1.5rem 0 0.75rem; }
+}
 </style>
 </head>
 <body>
@@ -513,9 +640,9 @@ nav {
 <nav>
   <div class="nav-logo">FADE<span>.</span>TRACK</div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('log')">Log Trade</button>
-    <button class="nav-tab" onclick="showPage('stats')">Stats</button>
-    <button class="nav-tab" onclick="showPage('review')">AI Review</button>
+    <button class="nav-tab active" onclick="showPage('log', this)">Log Trade</button>
+    <button class="nav-tab" onclick="showPage('stats', this)">Stats</button>
+    <button class="nav-tab" onclick="showPage('review', this)">AI Review</button>
   </div>
   <div class="nav-actions">
     <button class="nav-io-btn import" onclick="openImport()">⬆ Import</button>
@@ -524,7 +651,29 @@ nav {
   </div>
 </nav>
 
-<!-- LOG PAGE -->
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav" style="display:none" id="bottom-nav">
+  <button class="bn-tab active" onclick="showPage('log', this)">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    Log
+  </button>
+  <button class="bn-tab" onclick="showPage('stats', this)">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-4"/></svg>
+    Stats
+  </button>
+  <button class="bn-tab" onclick="showPage('review', this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    Review
+  </button>
+  <button class="bn-tab" onclick="exportData()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export
+  </button>
+  <button class="bn-tab" onclick="openImport()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Import
+  </button>
+</nav>
 <div id="page-log" class="page active">
   <div class="log-layout">
     <div class="panel-left">
@@ -606,15 +755,32 @@ function updateNavCount() {
   document.getElementById('nav-count').textContent = trades.length + ' trade' + (trades.length !== 1 ? 's' : '');
 }
 
-function showPage(p) {
+function showPage(p, callerEl) {
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.bn-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('page-' + p).classList.add('active');
-  event.target.classList.add('active');
+  // Activate the right top nav tab
+  document.querySelectorAll('.nav-tab').forEach(el => {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'"+p+"'")) el.classList.add('active');
+  });
+  // Activate bottom nav tab
+  if (callerEl) callerEl.classList.add('active');
+  else document.querySelectorAll('.bn-tab').forEach(el => {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'"+p+"'")) el.classList.add('active');
+  });
   if (p === 'stats') renderStats();
   if (p === 'log') renderTrades();
   if (p === 'review') renderReview();
 }
+
+// Show bottom nav on mobile
+if (window.innerWidth <= 768) {
+  document.getElementById('bottom-nav').style.display = 'flex';
+}
+window.addEventListener('resize', () => {
+  document.getElementById('bottom-nav').style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+});
 
 // ── REVIEW PAGE ────────────────────────────────────────────────────────────
 
