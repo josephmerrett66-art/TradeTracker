@@ -2058,7 +2058,9 @@ function drawEquity(points) {
     ctx.fillText('start', mapX(0), h - pad.b + 6);
     ctx.fillText('#' + (points.length - 1), mapX(points.length - 1), h - pad.b + 6);
   }
-}(counts, total) {
+}
+
+function drawDonut(counts, total) {
   const svg = document.getElementById('donut-svg');
   if (!svg) return;
   const COLORS = {
@@ -2090,60 +2092,6 @@ function drawEquity(points) {
   svg.innerHTML = paths + `<text x="60" y="56" text-anchor="middle" fill="#F0F0F2" font-size="16" font-family="Syne" font-weight="700">${total}</text><text x="60" y="70" text-anchor="middle" fill="#55555F" font-size="10" font-family="DM Mono">total</text>`;
   const leg = document.getElementById('donut-legend');
   if (leg) leg.innerHTML = legendItems.map(d => `<div class="legend-row"><div class="legend-dot" style="background:${d.color}"></div><span class="legend-label">${d.label}</span><span class="legend-val">${d.val}</span></div>`).join('');
-}
-
-function drawEquity(points) {
-  const canvas = document.getElementById('equity-canvas');
-  if (!canvas || points.length < 2) return;
-  const wrap = canvas.parentElement;
-  const dpr = window.devicePixelRatio || 1;
-  const w = wrap.clientWidth || 400;
-  const h = wrap.clientHeight || 180;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const min = Math.min(...points), max = Math.max(...points);
-  const pad = { t: 10, b: 24, l: 8, r: 8 };
-  const pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
-  const mapX = i => pad.l + (i / (points.length - 1)) * pw;
-  const mapY = v => pad.t + (1 - (v - min) / (max - min || 1)) * ph;
-
-  // grid lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
-  [0.25,0.5,0.75].forEach(r => {
-    const y = pad.t + r * ph;
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
-  });
-
-  // fill
-  const grad = ctx.createLinearGradient(0, pad.t, 0, h - pad.b);
-  const isUp = points[points.length-1] >= points[0];
-  grad.addColorStop(0, isUp ? 'rgba(61,214,140,0.25)' : 'rgba(255,82,82,0.25)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.beginPath();
-  ctx.moveTo(mapX(0), mapY(points[0]));
-  points.forEach((v,i) => { if(i>0) ctx.lineTo(mapX(i), mapY(v)); });
-  ctx.lineTo(mapX(points.length-1), h - pad.b);
-  ctx.lineTo(mapX(0), h - pad.b);
-  ctx.closePath();
-  ctx.fillStyle = grad; ctx.fill();
-
-  // line
-  ctx.beginPath();
-  ctx.moveTo(mapX(0), mapY(points[0]));
-  points.forEach((v,i) => { if(i>0) ctx.lineTo(mapX(i), mapY(v)); });
-  ctx.strokeStyle = isUp ? '#3DD68C' : '#FF5252';
-  ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
-
-  // labels
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.font = '10px DM Mono, monospace';
-  ctx.fillText('$' + Math.round(points[0]).toLocaleString(), pad.l, h - 6);
-  const last = '$' + Math.round(points[points.length-1]).toLocaleString();
-  ctx.fillText(last, w - pad.r - ctx.measureText(last).width, h - 6);
 }
 
 function attachScreenshot(id, input) {
