@@ -947,12 +947,10 @@ nav {
 }
 .sig-coin-card:hover { border-color: var(--border2); }
 .sig-coin-card.signal { border-color: var(--yellow-border); background: linear-gradient(135deg, var(--yellow-dim), var(--bg2)); }
-.sig-coin-card.signal::before {
-  content: '🎯 SIGNAL'; position: absolute; top: 10px; right: 12px;
-  font-size: 9px; font-family: 'DM Mono', monospace; color: var(--yellow);
-  background: var(--yellow-dim); border: 1px solid var(--yellow-border);
-  padding: 2px 7px; border-radius: 100px; letter-spacing: 0.5px;
-}
+.sig-coin-card.grade-A { background: linear-gradient(135deg, rgba(61,214,140,0.1), var(--bg2)); border-color: rgba(61,214,140,0.35); }
+.sig-coin-card.grade-B { background: linear-gradient(135deg, rgba(74,158,255,0.1), var(--bg2)); border-color: rgba(74,158,255,0.35); }
+.sig-coin-card.grade-C { background: linear-gradient(135deg, rgba(245,200,66,0.08), var(--bg2)); border-color: rgba(245,200,66,0.25); }
+.sig-coin-card.grade-D { background: linear-gradient(135deg, rgba(255,82,82,0.08), var(--bg2)); border-color: rgba(255,82,82,0.25); }
 .sig-coin-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; margin-bottom: 2px; }
 .sig-coin-price { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text2); margin-bottom: 10px; }
 .sig-gain-badge {
@@ -978,6 +976,37 @@ nav {
   cursor: pointer; transition: all 0.15s;
 }
 .sig-use-btn:hover { background: var(--yellow); color: #0C0C0E; }
+
+/* Signal filter checklist */
+.sig-checklist { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; padding: 10px 12px; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.sig-check-row { display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: 'DM Mono', monospace; }
+.sig-check-icon { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; }
+.sig-check-icon.pass { background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.sig-check-icon.fail { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
+.sig-check-icon.warn { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.sig-check-text { color: var(--text2); flex: 1; }
+.sig-check-val { font-size: 10px; text-align: right; font-weight: 600; }
+.sig-check-val.pass { color: var(--green); }
+.sig-check-val.fail { color: var(--red); }
+.sig-check-val.warn { color: var(--yellow); }
+.sig-check-val.grey { color: var(--text3); }
+.sig-verdict { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; padding: 7px 11px; border-radius: var(--radius-sm); font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 600; letter-spacing: 0.3px; }
+.sig-verdict.green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.sig-verdict.red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
+.sig-verdict.yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow-border); }
+
+/* Grade badge */
+.sig-grade {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px;
+  flex-shrink: 0; letter-spacing: -0.5px;
+}
+.sig-grade.A { background: rgba(61,214,140,0.2); color: var(--green); border: 2px solid rgba(61,214,140,0.5); }
+.sig-grade.B { background: rgba(74,158,255,0.15); color: var(--blue); border: 2px solid rgba(74,158,255,0.4); }
+.sig-grade.C { background: var(--yellow-dim); color: var(--yellow); border: 2px solid var(--yellow-border); }
+.sig-grade.D { background: var(--red-dim); color: var(--red); border: 2px solid rgba(255,82,82,0.3); }
+.sig-grade-reason { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -2932,18 +2961,16 @@ async function fetchSignals() {
 
   btn.disabled = true;
   btn.classList.add('spinning');
-  content.innerHTML = '<div class="sig-status loading">⏳ Fetching live data from Bybit...</div>';
+  content.innerHTML = '<div class="sig-status loading">⏳ Fetching top movers from Bybit...</div>';
 
   try {
+    // Step 1 — get all USDT linear tickers
     const res = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if (json.retCode !== 0) throw new Error(json.retMsg || 'Bybit API error');
 
-    const tickers = json.result?.list || [];
-
-    // Filter to USDT perps only (exclude USDC, inverse, etc.)
-    const usdt = tickers.filter(t =>
+    const tickers = (json.result?.list || []).filter(t =>
       t.symbol.endsWith('USDT') &&
       !t.symbol.includes('USDC') &&
       parseFloat(t.price24hPcnt) > 0 &&
@@ -2951,32 +2978,54 @@ async function fetchSignals() {
       parseFloat(t.volume24h) > 0
     );
 
-    // Sort by 24h gain descending, take top 10
-    usdt.sort((a, b) => parseFloat(b.price24hPcnt) - parseFloat(a.price24hPcnt));
-    const top10 = usdt.slice(0, 10);
+    tickers.sort((a, b) => parseFloat(b.price24hPcnt) - parseFloat(a.price24hPcnt));
+    const top10 = tickers.slice(0, 10);
 
     if (!top10.length) {
       content.innerHTML = '<div class="sig-status empty">No data returned. Try again.</div>';
       return;
     }
 
-    // Separate signals (≥30%) from the rest
+    // Step 2 — fetch 30-day daily klines for each coin in parallel to get avg volume
+    content.innerHTML = '<div class="sig-status loading">⏳ Fetching 30-day volume history for each coin...</div>';
+
+    const spikeData = await Promise.all(top10.map(async t => {
+      try {
+        const kr = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t.symbol}&interval=D&limit=31`);
+        const kj = await kr.json();
+        const candles = kj.result?.list || [];
+        // candles[0] is today (current, partial), candles[1..30] are completed daily candles
+        // Each candle: [startTime, open, high, low, close, volume, turnover]
+        const completedCandles = candles.slice(1, 31); // skip today's partial candle
+        if (completedCandles.length === 0) return { symbol: t.symbol, spike: null, avgVol: null };
+        const avgVol = completedCandles.reduce((sum, c) => sum + parseFloat(c[5] || 0), 0) / completedCandles.length;
+        const todayVol = parseFloat(t.volume24h);
+        const spike = avgVol > 0 ? todayVol / avgVol : null;
+        return { symbol: t.symbol, spike, avgVol };
+      } catch {
+        return { symbol: t.symbol, spike: null, avgVol: null };
+      }
+    }));
+
+    // Build lookup map
+    const spikeMap = {};
+    spikeData.forEach(d => { spikeMap[d.symbol] = d; });
+
+    // Step 3 — render cards
     const signals = top10.filter(t => parseFloat(t.price24hPcnt) * 100 >= 30);
     const watching = top10.filter(t => parseFloat(t.price24hPcnt) * 100 < 30);
 
     let html = '';
-
     if (signals.length) {
       html += `<div class="sig-section-label alert">🎯 FADE Signals — 30%+ gain (${signals.length})</div>`;
       html += '<div class="sig-coin-grid">';
-      signals.forEach(t => { html += buildSignalCard(t, true); });
+      signals.forEach(t => { html += buildSignalCard(t, true, spikeMap[t.symbol]); });
       html += '</div>';
     }
-
     if (watching.length) {
       html += `<div class="sig-section-label">Top Movers — watching (${watching.length})</div>`;
       html += '<div class="sig-coin-grid">';
-      watching.forEach(t => { html += buildSignalCard(t, false); });
+      watching.forEach(t => { html += buildSignalCard(t, false, spikeMap[t.symbol]); });
       html += '</div>';
     }
 
@@ -2992,11 +3041,12 @@ async function fetchSignals() {
   }
 }
 
-function buildSignalCard(t, isSignal) {
+function buildSignalCard(t, isSignal, volData) {
   const coin = t.symbol.replace('USDT', '');
   const price = parseFloat(t.lastPrice);
   const gainPct = parseFloat(t.price24hPcnt) * 100;
   const vol = parseFloat(t.volume24h);
+  const spike = volData?.spike ?? null;
 
   function fmtSigPrice(n) {
     if (!n || isNaN(n)) return '—';
@@ -3005,36 +3055,88 @@ function buildSignalCard(t, isSignal) {
     if (n >= 0.001) return '$' + n.toFixed(6);
     return '$' + n.toFixed(8);
   }
-
   function fmtVol(v) {
-    if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
-    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
-    if (v >= 1e3) return (v / 1e3).toFixed(0) + 'K';
+    if (!v || isNaN(v)) return '—';
+    if (v >= 1e9) return (v/1e9).toFixed(1)+'B';
+    if (v >= 1e6) return (v/1e6).toFixed(1)+'M';
+    if (v >= 1e3) return (v/1e3).toFixed(0)+'K';
     return v.toFixed(0);
   }
+  function chk(icon, cls, label, val, valCls) {
+    return `<div class="sig-check-row">
+      <div class="sig-check-icon ${cls}">${icon}</div>
+      <span class="sig-check-text">${label}</span>
+      <span class="sig-check-val ${valCls}">${val}</span>
+    </div>`;
+  }
 
+  // ── Evaluate each filter ──────────────────────────────────────
+  const c1_gain   = gainPct >= 30;
+  const c2_spike  = spike !== null ? spike >= 8 : null;
+  const c3_black  = coin.toUpperCase() !== 'AXS';
+
+  // ── Grade ─────────────────────────────────────────────────────
+  // A: gain 30–100%, spike ≥15x, no blacklist
+  // B: gain 30–100%, spike 8–15x, no blacklist
+  // C: gain >100% (historically weaker), spike ≥8x, no blacklist
+  // D: fails any auto filter
+  let grade, gradeReason;
+  if (!c1_gain || !c3_black || c2_spike === false) {
+    grade = 'D';
+    gradeReason = !c3_black ? 'blacklisted' : !c1_gain ? 'gain <30%' : 'vol spike <8x';
+  } else if (c2_spike === null) {
+    // Unknown spike — grade based on gain only
+    grade = gainPct > 100 ? 'C' : 'B';
+    gradeReason = gainPct > 100 ? '>100% gain (weaker)' : 'spike unconfirmed';
+  } else if (gainPct > 100) {
+    grade = 'C';
+    gradeReason = '>100% gain tier';
+  } else if (spike >= 15) {
+    grade = 'A';
+    gradeReason = `${gainPct.toFixed(0)}% gain · ${spike.toFixed(1)}x spike`;
+  } else {
+    grade = 'B';
+    gradeReason = `${gainPct.toFixed(0)}% gain · ${spike.toFixed(1)}x spike`;
+  }
+
+  // Overall verdict
+  const autoFail = !c1_gain || !c3_black || c2_spike === false;
+  const verdictCls = autoFail ? 'red' : (c2_spike === null) ? 'yellow' : 'green';
+  const verdictMsg = autoFail
+    ? '✕ Does not qualify'
+    : c2_spike === null
+    ? '⚠ Partial — check vol spike manually'
+    : '✓ Auto-filters passed — verify manual checks';
+
+  const checklistHtml = `
+    <div class="sig-verdict ${verdictCls}">${verdictMsg}</div>
+    <div class="sig-checklist">
+      ${chk(c1_gain?'✓':'✕', c1_gain?'pass':'fail', '24h gain ≥30%', gainPct.toFixed(1)+'%', c1_gain?'pass':'fail')}
+      ${spike !== null
+        ? chk(c2_spike?'✓':'✕', c2_spike?'pass':'fail', 'Vol spike ≥8x avg', spike.toFixed(1)+'x', c2_spike?'pass':'fail')
+        : chk('?', 'warn', 'Vol spike ≥8x avg', 'unavailable', 'grey')}
+      ${chk(c3_black?'✓':'✕', c3_black?'pass':'fail', 'Not blacklisted (AXS)', c3_black?'clear':'BLACKLISTED', c3_black?'pass':'fail')}
+      ${chk('?', 'warn', 'Signal time 8am–12pm AEST', 'manual check', 'grey')}
+      ${chk('?', 'warn', '2 red 15m candles at entry', 'manual check', 'grey')}
+      ${chk('?', 'warn', 'No open position', 'manual check', 'grey')}
+    </div>`;
+
+  // ── Entry levels (signals only) ───────────────────────────────
   let levelsHtml = '';
   let useBtnHtml = '';
-
   if (isSignal) {
-    // FADE formula
-    const gain = gainPct;
-    const signal = price; // current price ≈ signal price
-    const p24ago = signal / (1 + gain / 100);
-    const entryMult = gain >= 100 ? 0.92 : gain >= 60 ? 0.94 : 0.96;
-    const entry = signal * entryMult;
-    const stop = signal * 1.07;
+    const p24ago = price / (1 + gainPct / 100);
+    const entryMult = gainPct >= 100 ? 0.92 : gainPct >= 60 ? 0.94 : 0.96;
+    const entry = price * entryMult;
+    const stop  = price * 1.07;
     const target = entry - (entry - p24ago) * 0.60;
-    const targetPct = ((target - entry) / entry * 100);
-    const stopPct = ((stop - entry) / entry * 100);
+    const targetPct = (target - entry) / entry * 100;
+    const stopPct   = (stop   - entry) / entry * 100;
     const rr = Math.abs(targetPct / stopPct);
 
     levelsHtml = `
       <div class="sig-levels">
-        <div class="sig-level-row">
-          <span class="sig-level-label">Signal</span>
-          <span class="sig-level-val" style="color:var(--text2)">${fmtSigPrice(signal)}</span>
-        </div>
+        <div class="sig-level-row"><span class="sig-level-label">Signal</span><span class="sig-level-val" style="color:var(--text2)">${fmtSigPrice(price)}</span></div>
         <div class="sig-level-row">
           <span class="sig-level-label">Entry ×${entryMult}</span>
           <span class="sig-level-val" style="color:var(--yellow)">${fmtSigPrice(entry)}<button class="sig-copy" onclick="navigator.clipboard.writeText('${entry.toFixed(8)}');this.textContent='✓'">copy</button></span>
@@ -3047,20 +3149,28 @@ function buildSignalCard(t, isSignal) {
           <span class="sig-level-label">Target 60%</span>
           <span class="sig-level-val" style="color:var(--green)">${fmtSigPrice(target)}<button class="sig-copy" onclick="navigator.clipboard.writeText('${target.toFixed(8)}');this.textContent='✓'">copy</button></span>
         </div>
-        <div class="sig-level-row">
-          <span class="sig-level-label">R:R</span>
-          <span class="sig-level-val" style="color:${rr >= 1 ? 'var(--green)' : 'var(--red)'}">${rr.toFixed(2)}R</span>
-        </div>
+        <div class="sig-level-row"><span class="sig-level-label">R:R</span><span class="sig-level-val" style="color:${rr>=1?'var(--green)':'var(--red)'}">${rr.toFixed(2)}R</span></div>
       </div>`;
-
     useBtnHtml = `<button class="sig-use-btn" onclick="useSignalInCalc('${coin}USDT', ${price.toFixed(8)}, ${gainPct.toFixed(2)})">→ Open in Calculator</button>`;
   }
 
   return `
-    <div class="sig-coin-card ${isSignal ? 'signal' : ''}">
-      <div class="sig-coin-name">${coin}</div>
-      <div class="sig-coin-price">${fmtSigPrice(price)} · Vol ${fmtVol(vol)}</div>
-      <div class="sig-gain-badge ${gainPct >= 50 ? 'high' : 'mid'}">+${gainPct.toFixed(1)}%</div>
+    <div class="sig-coin-card ${isSignal ? 'signal' : ''} grade-${grade}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <div>
+            <div class="sig-grade ${grade}">${grade}</div>
+            <div class="sig-grade-reason">${gradeReason}</div>
+          </div>
+          <div>
+            <div class="sig-coin-name">${coin}</div>
+            ${isSignal ? '<div style="font-size:9px;font-family:\'DM Mono\',monospace;color:var(--yellow);letter-spacing:0.5px">🎯 SIGNAL</div>' : ''}
+          </div>
+        </div>
+        <div class="sig-gain-badge ${gainPct >= 50 ? 'high' : 'mid'}" style="font-size:20px;flex-shrink:0">+${gainPct.toFixed(1)}%</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);margin-bottom:12px;margin-top:6px">${fmtSigPrice(price)} · Vol ${fmtVol(vol)}</div>
+      ${checklistHtml}
       ${levelsHtml}
       ${useBtnHtml}
     </div>`;
