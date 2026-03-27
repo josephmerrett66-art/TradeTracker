@@ -1113,6 +1113,31 @@ nav {
 const API_KEY_PLACEHOLDER = '';
 let trades = JSON.parse(localStorage.getItem('fade-trades') || '[]');
 
+// ── DEFENSIVE NORMALISER ───────────────────────────────────────────────────
+// Ensures every trade has the fields the app expects, regardless of source.
+function normaliseTrade(t) {
+  if (!t || typeof t !== 'object') return null;
+  return {
+    id:           t.id           ?? Date.now() + Math.random(),
+    coin:         (t.coin        && typeof t.coin === 'string') ? t.coin : 'UNKNOWN',
+    outcome:      t.outcome      ?? 'watching',
+    gain_24h:     typeof t.gain_24h === 'number' ? t.gain_24h : null,
+    vol_spike:    t.vol_spike    ?? null,
+    entry:        typeof t.entry === 'number' ? t.entry : null,
+    exit:         typeof t.exit  === 'number' ? t.exit  : null,
+    pnl:          typeof t.pnl   === 'number' ? t.pnl   : null,
+    pct_pnl:      typeof t.pct_pnl === 'number' ? t.pct_pnl : null,
+    close_reason: t.close_reason ?? null,
+    screenshot:   t.screenshot   ?? null,
+    notes:        t.notes        ?? '',
+    date:         t.date         ?? new Date().toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }),
+    ts:           t.ts           ?? t.id ?? Date.now(),
+  };
+}
+
+// Normalise on load so localStorage data is always clean
+trades = trades.map(normaliseTrade).filter(Boolean);
+
 function save() {
   localStorage.setItem('fade-trades', JSON.stringify(trades));
   updateNavCount();
@@ -1446,7 +1471,7 @@ Give concrete, pattern-based answers using the actual trade data above.`;
 function buildSizingPrompt() {
   const withBoth = trades.filter(t => t.pct_pnl !== null && t.pnl !== null && !isNaN(t.pnl));
   const lines = withBoth.map(t =>
-    `  ${t.coin.replace('USDT','')} | ${t.pct_pnl.toFixed(2)}% move | $${Math.abs(t.pnl).toFixed(2)} P&L`
+    `  ${t.coin.replace('USDT','')} | ${t.pct_pnl !== null ? t.pct_pnl.toFixed(2) : 'N/A'}% move | $${Math.abs(t.pnl).toFixed(2)} P&L`
   ).join('\n');
   return `You are a risk management coach reviewing a crypto trader's position sizing.
 
@@ -2099,21 +2124,25 @@ function renderStats() {
     </table>` : '<div style="color:var(--text3);font-size:13px;padding:1rem 0">No completed trades yet.</div>'}
   </div>`;
 
-  // Individual trade P&L bars
   const barTrades = [...entered].filter(t => t.pct_pnl !== null || (t.entry && t.exit));
-  const maxAbs = Math.max(...barTrades.map(t => Math.abs(t.pct_pnl || ((t.entry-t.exit)/t.entry*100) || 0)), 1);
-  document.getElementById('trade-pnl-bars').innerHTML = barTrades.slice(0,20).map(t => {
-    const p = t.pct_pnl !== null ? t.pct_pnl : ((t.entry-t.exit)/t.entry*100);
-    const w = Math.min(Math.abs(p) / maxAbs * 100, 100);
-    const coin = t.coin.replace('USDT','').replace('USDT.P','');
-    const cls = p >= 0 ? 'pos' : 'neg';
-    return `<div class="trade-pnl-bar-row">
-      <div class="tpb-coin">${coin}</div>
-      <div class="tpb-track">
-        <div class="tpb-fill ${cls}" style="width:${w}%">${p>=0?'+':''}${p.toFixed(1)}%</div>
-      </div>
-    </div>`;
-  }).join('');
+  if (barTrades.length) {
+    const maxAbs = Math.max(...barTrades.map(t => Math.abs(t.pct_pnl !== null ? t.pct_pnl : ((t.entry-t.exit)/t.entry*100)) || 0), 1);
+    document.getElementById('trade-pnl-bars').innerHTML = barTrades.slice(0,20).map(t => {
+      const p = t.pct_pnl !== null ? t.pct_pnl : ((t.entry-t.exit)/t.entry*100);
+      const w = Math.min(Math.abs(p) / maxAbs * 100, 100);
+      const coin = t.coin.replace('USDT','').replace('USDT.P','');
+      const cls = p >= 0 ? 'pos' : 'neg';
+      return `<div class="trade-pnl-bar-row">
+        <div class="tpb-coin">${coin}</div>
+        <div class="tpb-track">
+          <div class="tpb-fill ${cls}" style="width:${w}%">${p>=0?'+':''}${p.toFixed(1)}%</div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    const el = document.getElementById('trade-pnl-bars');
+    if (el) el.innerHTML = '<div style="color:var(--text3);font-size:12px">Add entry/exit prices to see per-trade P&L bars.</div>';
+  }
 
   // Draw donut
   drawDonut(outcomeCounts, trades.length);
@@ -2157,7 +2186,7 @@ function scheduleDrawEquity(points, attempts) {
 
 function drawEquity(points) {
   const canvas = document.getElementById('equity-canvas');
-  if (!canvas || points.length < 2) return;
+  if (!canvas || !points || points.length < 2) return;
   const wrap = document.getElementById('equity-wrap');
   if (!wrap) return;
   const dpr = window.devicePixelRatio || 1;
@@ -2361,7 +2390,7 @@ function handleImportFile(file) {
         status.className = 'modal-status err';
         return;
       }
-      _pendingImport = { trades: importedTrades, balance: importedBalance };
+      _pendingImport = { trades: importedTrades.map(normaliseTrade).filter(Boolean), balance: importedBalance };
       status.textContent = `✓ Found ${importedTrades.length} trade${importedTrades.length!==1?'s':''} — choose Merge or Replace All below.`;
       status.className = 'modal-status ok';
       document.getElementById('import-merge-btn').disabled = false;
@@ -2420,6 +2449,11 @@ renderNotes();
 
 window.addEventListener('resize', () => {
   if (window._equityPoints) scheduleDrawEquity(window._equityPoints);
+});
+
+// Global error handler — catches any uncaught JS errors and shows them cleanly
+window.addEventListener('error', e => {
+  console.error('FADE.TRACK error:', e.message, 'at', e.filename, e.lineno);
 });
 </script>
 </body>
