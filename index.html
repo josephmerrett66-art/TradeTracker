@@ -672,6 +672,147 @@ nav {
 .checklist-text.checked { color: var(--text3); text-decoration: line-through; }
 
 .cheat-full { margin-bottom: 16px; }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE  ≤ 768px
+═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Body padding for bottom nav ── */
+  body { padding-bottom: 68px; }
+
+  /* ── Top nav: hide tabs, compress ── */
+  nav { padding: 0 1rem; height: 52px; }
+  .nav-tabs { display: none; }
+  .nav-badge { display: none; }
+  .nav-actions { gap: 6px; }
+  .nav-io-btn { padding: 5px 9px; font-size: 11px; }
+  .nav-logo { font-size: 15px; }
+
+  /* ── Bottom tab bar ── */
+  #bottom-nav {
+    display: flex !important;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 62px; z-index: 200;
+    background: rgba(12,12,14,0.98);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bn-tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-family: 'DM Mono', monospace;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 6px 2px; transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+  }
+  .bn-tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+  .bn-tab.active { color: var(--yellow); }
+  .bn-tab.active svg { stroke: var(--yellow); }
+
+  /* ── LOG PAGE ── */
+  .log-layout { grid-template-columns: 1fr; min-height: auto; }
+  .panel-left { border-right: none; border-bottom: 1px solid var(--border); padding: 1rem; gap: 1rem; }
+  .panel-right { padding: 1rem; }
+  .field-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field input, .field select { height: 46px; font-size: 16px; } /* 16px prevents iOS zoom */
+  .save-btn { height: 50px; font-size: 15px; border-radius: var(--radius); }
+  .cr-btn { height: 46px; font-size: 13px; padding: 0 10px; }
+  .trades-title { font-size: 16px; }
+
+  /* ── Trade rows: compact card ── */
+  .trade-row-wrap { border-radius: var(--radius-sm); }
+  .trade-row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 6px; padding: 12px;
+  }
+  /* Hide entry/exit columns on mobile */
+  .trade-row > div:nth-child(2),
+  .trade-row > div:nth-child(3) { display: none; }
+  .trade-row > div:nth-child(1) { grid-row: 1; grid-column: 1; }
+  .trade-row > div:nth-child(4) { grid-row: 1; }
+  .trade-row > div:nth-child(5) { grid-row: 2; grid-column: 1; }
+  .trade-row > div:nth-child(6) { grid-row: 2; }
+  .ss-actions { grid-row: 1 / span 2; grid-column: 2; justify-content: center; align-items: center; }
+  .tr-coin { font-size: 16px; }
+
+  /* ── STATS PAGE ── */
+  .stats-page { padding: 1rem; }
+  .stats-heading { font-size: 20px; margin-bottom: 1rem; }
+  .kpi-grid-6 { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .kpi-grid-3 { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .kpi { padding: 10px 12px; }
+  .kpi-val { font-size: 18px; }
+  .kpi-label { font-size: 9px; margin-bottom: 5px; }
+  .kpi-sub { font-size: 10px; }
+  .two-col, .three-col { grid-template-columns: 1fr; gap: 10px; }
+  .chart-card { padding: 1rem; }
+  .chart-title { font-size: 13px; margin-bottom: 0.75rem; }
+  .section-label { margin: 1.25rem 0 0.75rem; }
+  .balance-row { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .balance-hint { display: none; }
+  .balance-input { width: 110px; }
+  .streak-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .streak-card { padding: 10px 6px; }
+  .streak-val { font-size: 18px; }
+  .split-row { flex-wrap: wrap; gap: 8px; }
+  .split-item { min-width: calc(50% - 4px); }
+  /* Hide lower-priority table columns */
+  .ticker-table th:nth-child(n+5), .ticker-table td:nth-child(n+5) { display: none; }
+  .bucket-table th:last-child, .bucket-table td:last-child { display: none; }
+
+  /* ── REVIEW PAGE ── */
+  .review-page { padding: 1rem; }
+  .review-heading { font-size: 20px; }
+  .review-sub { font-size: 12px; margin-bottom: 1rem; }
+  .review-layout { grid-template-columns: 1fr; gap: 10px; }
+  .prompt-sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .prompt-card { padding: 10px 12px; }
+  .pc-desc { display: none; }
+  .snapshot-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .po-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .po-actions { width: 100%; display: flex; gap: 8px; }
+  .po-btn { flex: 1; text-align: center; padding: 10px 8px; font-size: 12px; }
+  .prompt-text { font-size: 12px; min-height: 80px; padding: 0.75rem; }
+
+  /* ── NOTES PAGE: mobile = sidebar first, tap opens editor ── */
+  .notes-page { grid-template-columns: 1fr; min-height: auto; }
+  .notes-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 45vh; overflow-y: auto; }
+  .notes-sidebar-header { padding: 1rem; }
+  .notes-editor { min-height: 50vh; }
+  .notes-editor-header { flex-wrap: wrap; gap: 8px; padding: 0.75rem 1rem; }
+  .note-title-input { font-size: 17px; width: 100%; }
+  .note-mood-wrap { flex-wrap: nowrap; gap: 4px; }
+  .note-mood-wrap span { display: none; } /* hide "MOOD" label */
+  .mood-btn { width: 36px; height: 36px; font-size: 18px; }
+  .note-tags-wrap { padding: 8px 1rem; gap: 6px; }
+  .note-tag { padding: 4px 10px; font-size: 11px; }
+  .note-textarea { font-size: 16px; padding: 1rem; min-height: 260px; }
+  .notes-editor-footer { padding: 8px 1rem; }
+
+  /* ── CHEATSHEET ── */
+  .cheat-page { padding: 1rem; }
+  .cheat-heading { font-size: 22px; }
+  .cheat-sub { font-size: 12px; margin-bottom: 1rem; }
+  .cheat-two { grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
+  .cheat-card { padding: 1rem; }
+  .perf-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .perf-val { font-size: 18px; }
+  .checklist-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .level-box { font-size: 12px; line-height: 1.9; padding: 1rem; }
+  .sizing-table th, .sizing-table td { padding: 7px 6px; font-size: 11px; }
+  .rule-text { font-size: 12px; }
+  .step-title { font-size: 13px; }
+  .step-desc { font-size: 11px; }
+
+  /* ── MODAL ── */
+  .modal { padding: 1.25rem; max-width: 96vw; }
+  .modal-title { font-size: 16px; }
+  .modal-actions { flex-direction: column; gap: 8px; }
+  .modal-btn { width: 100%; text-align: center; padding: 12px; }
+}
 </style>
 </head>
 <body>
@@ -718,7 +859,24 @@ nav {
   </div>
 </nav>
 
-<!-- LOG PAGE -->
+<!-- BOTTOM NAV — mobile only -->
+<nav id="bottom-nav" style="display:none">
+  <button class="bn-tab active" id="bn-log" onclick="showPage('log',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Log
+  </button>
+  <button class="bn-tab" id="bn-stats" onclick="showPage('stats',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-4"/></svg>Stats
+  </button>
+  <button class="bn-tab" id="bn-review" onclick="showPage('review',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Review
+  </button>
+  <button class="bn-tab" id="bn-notes" onclick="showPage('notes',this)">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Notes
+  </button>
+  <button class="bn-tab" id="bn-cheat" onclick="showPage('cheat',this)">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Cheat
+  </button>
+</nav>
 <div id="page-log" class="page active">
   <div class="log-layout">
     <div class="panel-left">
@@ -964,17 +1122,32 @@ function updateNavCount() {
   document.getElementById('nav-count').textContent = trades.length + ' trade' + (trades.length !== 1 ? 's' : '');
 }
 
-function showPage(p) {
+function showPage(p, callerEl) {
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.bn-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('page-' + p).classList.add('active');
-  event.target.classList.add('active');
+  // Sync top nav
+  document.querySelectorAll('.nav-tab').forEach(el => {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'" + p + "'")) el.classList.add('active');
+  });
+  // Sync bottom nav
+  const bn = document.getElementById('bn-' + p);
+  if (bn) bn.classList.add('active');
+  if (callerEl) callerEl.classList.add('active');
   if (p === 'stats') renderStats();
   if (p === 'log') renderTrades();
   if (p === 'review') renderReview();
   if (p === 'notes') renderNotes();
   if (p === 'cheat') renderChecklist();
 }
+
+function applyMobileNav() {
+  const isMobile = window.innerWidth <= 768;
+  document.getElementById('bottom-nav').style.display = isMobile ? 'flex' : 'none';
+}
+applyMobileNav();
+window.addEventListener('resize', applyMobileNav);
 
 // ── NOTES ─────────────────────────────────────────────────────────────────
 
