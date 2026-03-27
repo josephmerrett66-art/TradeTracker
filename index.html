@@ -902,7 +902,82 @@ nav {
 
   /* ── TRADE JOURNAL ── */
   .trade-journal-textarea { font-size: 15px; }
+
+  /* ── SIGNALS ── */
+  .signals-page { padding: 1rem; }
+  .sig-coin-grid { grid-template-columns: 1fr; gap: 10px; }
 }
+
+/* ══════════════════════════════════
+   SIGNALS PAGE
+══════════════════════════════════ */
+.signals-page { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+.signals-heading { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; letter-spacing: -0.5px; margin-bottom: 4px; }
+.signals-heading span { color: var(--yellow); }
+.signals-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+
+.signals-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.refresh-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  background: var(--yellow); color: #0C0C0E;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+  border: none; cursor: pointer; transition: all 0.15s;
+}
+.refresh-btn:hover { background: #f0c030; }
+.refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.refresh-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.5; transition: transform 0.6s ease; }
+.refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
+.sig-last-updated { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.sig-filter-label { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
+
+.sig-status { padding: 14px 16px; border-radius: var(--radius-sm); font-size: 13px; font-family: 'DM Mono', monospace; margin-bottom: 1rem; }
+.sig-status.loading { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+.sig-status.error { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
+.sig-status.empty { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
+
+.sig-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); font-family: 'DM Mono', monospace; margin: 1.5rem 0 0.75rem; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.sig-section-label.alert { color: var(--yellow); border-color: var(--yellow-border); }
+
+.sig-coin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1rem; }
+.sig-coin-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  transition: border-color 0.15s; position: relative;
+}
+.sig-coin-card:hover { border-color: var(--border2); }
+.sig-coin-card.signal { border-color: var(--yellow-border); background: linear-gradient(135deg, var(--yellow-dim), var(--bg2)); }
+.sig-coin-card.signal::before {
+  content: '🎯 SIGNAL'; position: absolute; top: 10px; right: 12px;
+  font-size: 9px; font-family: 'DM Mono', monospace; color: var(--yellow);
+  background: var(--yellow-dim); border: 1px solid var(--yellow-border);
+  padding: 2px 7px; border-radius: 100px; letter-spacing: 0.5px;
+}
+.sig-coin-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; margin-bottom: 2px; }
+.sig-coin-price { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+.sig-gain-badge {
+  display: inline-flex; align-items: center;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 24px;
+  letter-spacing: -0.5px; margin-bottom: 12px;
+}
+.sig-gain-badge.high { color: var(--yellow); }
+.sig-gain-badge.mid { color: var(--green); }
+
+.sig-levels { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.sig-level-row { display: flex; justify-content: space-between; align-items: center; }
+.sig-level-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.sig-level-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.sig-copy { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--bg4); border: 1px solid var(--border); color: var(--text3); cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; }
+.sig-copy:hover { color: var(--text); background: var(--bg3); }
+
+.sig-use-btn {
+  margin-top: 12px; width: 100%; padding: 9px;
+  border-radius: var(--radius-sm); border: 1px solid var(--yellow-border);
+  background: var(--yellow-dim); color: var(--yellow);
+  font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px;
+  cursor: pointer; transition: all 0.15s;
+}
+.sig-use-btn:hover { background: var(--yellow); color: #0C0C0E; }
 </style>
 </head>
 <body>
@@ -938,6 +1013,7 @@ nav {
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('log')">Log Trade</button>
     <button class="nav-tab" onclick="showPage('stats')">Stats</button>
+    <button class="nav-tab" onclick="showPage('signals')">Signals</button>
     <button class="nav-tab" onclick="showPage('review')">Review</button>
     <button class="nav-tab" onclick="showPage('calc')">Calculator</button>
     <button class="nav-tab" onclick="showPage('notes')">Notes</button>
@@ -958,11 +1034,11 @@ nav {
   <button class="bn-tab" id="bn-stats" onclick="showPage('stats',this)">
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-4"/></svg>Stats
   </button>
+  <button class="bn-tab" id="bn-signals" onclick="showPage('signals',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a13 13 0 0 0 0 17M20.5 3.5a13 13 0 0 1 0 17"/></svg>Signals
+  </button>
   <button class="bn-tab" id="bn-calc" onclick="showPage('calc',this)">
     <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>Calc
-  </button>
-  <button class="bn-tab" id="bn-notes" onclick="showPage('notes',this)">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Notes
   </button>
   <button class="bn-tab" id="bn-cheat" onclick="showPage('cheat',this)">
     <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Cheat
@@ -1077,6 +1153,24 @@ nav {
     <div class="calc-card" style="margin-top:16px">
       <div class="calc-card-title">Position Risk Breakdown</div>
       <div id="calc-risk"><div class="calc-empty">Enter account size to see risk breakdown</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNALS PAGE -->
+<div id="page-signals" class="page">
+  <div class="signals-page">
+    <div class="signals-heading">Top <span>Signals</span></div>
+    <div class="signals-sub">Live USDT perp data from Bybit — top 24h gainers ranked by % move. Signals over 30% show FADE entry levels.</div>
+    <div class="signals-controls">
+      <button class="refresh-btn" id="refresh-btn" onclick="fetchSignals()">
+        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+      <div class="sig-last-updated" id="sig-last-updated">Not loaded yet</div>
+    </div>
+    <div id="signals-content">
+      <div class="sig-status empty">Hit Refresh to load live data from Bybit.</div>
     </div>
   </div>
 </div>
@@ -1306,6 +1400,7 @@ function showPage(p, callerEl) {
   if (p === 'notes') renderNotes();
   if (p === 'cheat') renderChecklist();
   if (p === 'calc') runCalc();
+  if (p === 'signals') {} // user hits refresh manually
 }
 
 function applyMobileNav() {
@@ -2827,7 +2922,166 @@ function buildTodChart(entered) {
       <div class="tod-count">${b.count}</div>
     </div>`;
   }).join('') + '</div>';
+}// ── SIGNALS — Bybit live top gainers ──────────────────────────────────────
+
+async function fetchSignals() {
+  const btn = document.getElementById('refresh-btn');
+  const content = document.getElementById('signals-content');
+  const lastUpdated = document.getElementById('sig-last-updated');
+  if (!btn || !content) return;
+
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  content.innerHTML = '<div class="sig-status loading">⏳ Fetching live data from Bybit...</div>';
+
+  try {
+    const res = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.retCode !== 0) throw new Error(json.retMsg || 'Bybit API error');
+
+    const tickers = json.result?.list || [];
+
+    // Filter to USDT perps only (exclude USDC, inverse, etc.)
+    const usdt = tickers.filter(t =>
+      t.symbol.endsWith('USDT') &&
+      !t.symbol.includes('USDC') &&
+      parseFloat(t.price24hPcnt) > 0 &&
+      parseFloat(t.lastPrice) > 0 &&
+      parseFloat(t.volume24h) > 0
+    );
+
+    // Sort by 24h gain descending, take top 10
+    usdt.sort((a, b) => parseFloat(b.price24hPcnt) - parseFloat(a.price24hPcnt));
+    const top10 = usdt.slice(0, 10);
+
+    if (!top10.length) {
+      content.innerHTML = '<div class="sig-status empty">No data returned. Try again.</div>';
+      return;
+    }
+
+    // Separate signals (≥30%) from the rest
+    const signals = top10.filter(t => parseFloat(t.price24hPcnt) * 100 >= 30);
+    const watching = top10.filter(t => parseFloat(t.price24hPcnt) * 100 < 30);
+
+    let html = '';
+
+    if (signals.length) {
+      html += `<div class="sig-section-label alert">🎯 FADE Signals — 30%+ gain (${signals.length})</div>`;
+      html += '<div class="sig-coin-grid">';
+      signals.forEach(t => { html += buildSignalCard(t, true); });
+      html += '</div>';
+    }
+
+    if (watching.length) {
+      html += `<div class="sig-section-label">Top Movers — watching (${watching.length})</div>`;
+      html += '<div class="sig-coin-grid">';
+      watching.forEach(t => { html += buildSignalCard(t, false); });
+      html += '</div>';
+    }
+
+    content.innerHTML = html;
+    lastUpdated.textContent = 'Updated ' + new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  } catch (err) {
+    content.innerHTML = `<div class="sig-status error">❌ Error: ${err.message}. Check your connection and try again.</div>`;
+    console.error('Signals fetch error:', err);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+  }
 }
+
+function buildSignalCard(t, isSignal) {
+  const coin = t.symbol.replace('USDT', '');
+  const price = parseFloat(t.lastPrice);
+  const gainPct = parseFloat(t.price24hPcnt) * 100;
+  const vol = parseFloat(t.volume24h);
+
+  function fmtSigPrice(n) {
+    if (!n || isNaN(n)) return '—';
+    if (n >= 1000) return '$' + n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (n >= 1) return '$' + n.toFixed(4);
+    if (n >= 0.001) return '$' + n.toFixed(6);
+    return '$' + n.toFixed(8);
+  }
+
+  function fmtVol(v) {
+    if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
+    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return (v / 1e3).toFixed(0) + 'K';
+    return v.toFixed(0);
+  }
+
+  let levelsHtml = '';
+  let useBtnHtml = '';
+
+  if (isSignal) {
+    // FADE formula
+    const gain = gainPct;
+    const signal = price; // current price ≈ signal price
+    const p24ago = signal / (1 + gain / 100);
+    const entryMult = gain >= 100 ? 0.92 : gain >= 60 ? 0.94 : 0.96;
+    const entry = signal * entryMult;
+    const stop = signal * 1.07;
+    const target = entry - (entry - p24ago) * 0.60;
+    const targetPct = ((target - entry) / entry * 100);
+    const stopPct = ((stop - entry) / entry * 100);
+    const rr = Math.abs(targetPct / stopPct);
+
+    levelsHtml = `
+      <div class="sig-levels">
+        <div class="sig-level-row">
+          <span class="sig-level-label">Signal</span>
+          <span class="sig-level-val" style="color:var(--text2)">${fmtSigPrice(signal)}</span>
+        </div>
+        <div class="sig-level-row">
+          <span class="sig-level-label">Entry ×${entryMult}</span>
+          <span class="sig-level-val" style="color:var(--yellow)">${fmtSigPrice(entry)}<button class="sig-copy" onclick="navigator.clipboard.writeText('${entry.toFixed(8)}');this.textContent='✓'">copy</button></span>
+        </div>
+        <div class="sig-level-row">
+          <span class="sig-level-label">Stop ×1.07</span>
+          <span class="sig-level-val" style="color:var(--red)">${fmtSigPrice(stop)}<button class="sig-copy" onclick="navigator.clipboard.writeText('${stop.toFixed(8)}');this.textContent='✓'">copy</button></span>
+        </div>
+        <div class="sig-level-row">
+          <span class="sig-level-label">Target 60%</span>
+          <span class="sig-level-val" style="color:var(--green)">${fmtSigPrice(target)}<button class="sig-copy" onclick="navigator.clipboard.writeText('${target.toFixed(8)}');this.textContent='✓'">copy</button></span>
+        </div>
+        <div class="sig-level-row">
+          <span class="sig-level-label">R:R</span>
+          <span class="sig-level-val" style="color:${rr >= 1 ? 'var(--green)' : 'var(--red)'}">${rr.toFixed(2)}R</span>
+        </div>
+      </div>`;
+
+    useBtnHtml = `<button class="sig-use-btn" onclick="useSignalInCalc('${coin}USDT', ${price.toFixed(8)}, ${gainPct.toFixed(2)})">→ Open in Calculator</button>`;
+  }
+
+  return `
+    <div class="sig-coin-card ${isSignal ? 'signal' : ''}">
+      <div class="sig-coin-name">${coin}</div>
+      <div class="sig-coin-price">${fmtSigPrice(price)} · Vol ${fmtVol(vol)}</div>
+      <div class="sig-gain-badge ${gainPct >= 50 ? 'high' : 'mid'}">+${gainPct.toFixed(1)}%</div>
+      ${levelsHtml}
+      ${useBtnHtml}
+    </div>`;
+}
+
+function useSignalInCalc(symbol, price, gain) {
+  // Switch to calculator and pre-fill
+  showPage('calc');
+  document.querySelectorAll('.nav-tab').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick')?.includes("'calc'"));
+  });
+  const sigEl = document.getElementById('c-signal');
+  const gainEl = document.getElementById('c-gain');
+  if (sigEl) { sigEl.value = price; }
+  if (gainEl) { gainEl.value = gain.toFixed(2); }
+  runCalc();
+  // Scroll to top of calc page
+  document.getElementById('page-calc')?.scrollTo(0, 0);
+  window.scrollTo(0, 0);
+}
+
 </script>
 </body>
 </html>
