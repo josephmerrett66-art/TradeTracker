@@ -188,6 +188,21 @@ nav {
 .b-fullwin { background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.2); }
 .b-partwin { background: rgba(61,214,140,0.07); color: #2aa868; border: 1px solid rgba(61,214,140,0.15); }
 .b-watching { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.b-entered  { background: rgba(74,158,255,0.15); color: var(--blue); border: 1px solid rgba(74,158,255,0.35); }
+
+/* Live price row for entered trades */
+.live-price-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 1.25rem; background: rgba(74,158,255,0.06);
+  border-top: 1px solid rgba(74,158,255,0.2);
+  font-family: 'DM Mono', monospace; font-size: 12px;
+}
+.live-price-label { color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.live-price-val { font-weight: 600; font-size: 14px; color: var(--blue); }
+.live-pnl-pos { color: var(--green); font-weight: 600; font-size: 13px; }
+.live-pnl-neg { color: var(--red); font-weight: 600; font-size: 13px; }
+.live-pnl-neu { color: var(--text3); font-size: 13px; }
+.live-price-loading { color: var(--text3); font-size: 11px; font-style: italic; }
 .b-partloss { background: rgba(255,82,82,0.07); color: #cc4444; border: 1px solid rgba(255,82,82,0.15); }
 .b-stopped { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
 .b-neverentered { background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
@@ -1156,6 +1171,7 @@ nav {
       <div class="edit-field"><label>Outcome</label>
         <select id="e-outcome">
           <option value="watching">Watching</option>
+          <option value="entered">Entered</option>
           <option value="fullwin">Full Win</option>
           <option value="partwin">Partial Win</option>
           <option value="partloss">Partial Loss</option>
@@ -1264,6 +1280,7 @@ nav {
           <div class="field"><label>Outcome</label>
             <select id="m-outcome">
               <option value="watching">Watching</option>
+              <option value="entered">Entered</option>
               <option value="fullwin">Full win</option>
               <option value="partwin">Partial win</option>
               <option value="partloss">Partial loss</option>
@@ -1281,7 +1298,13 @@ nav {
           <div class="field"><label>Entry $</label><input id="m-entry" type="number" step="any" oninput="autoCalcPnl()" /></div>
           <div class="field"><label>Exit $</label><input id="m-exit" type="number" step="any" oninput="autoCalcPnl()" /></div>
           <div class="field"><label>Position Size $</label><input id="m-pos-size" type="number" step="any" oninput="autoCalcPnl()" /></div>
-          <div class="field"><label>P&L $</label><input id="m-pnl" type="number" step="any" placeholder="auto" readonly style="color:var(--text2);cursor:default" /></div>
+          <div class="field">
+            <label>P&L $</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="m-pnl" type="number" step="any" placeholder="auto" readonly style="color:var(--text2);cursor:default;flex:1" />
+              <button type="button" onclick="autoCalcPnl()" title="Recalculate P&L" style="height:40px;padding:0 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;font-size:14px;flex-shrink:0;transition:all 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">↻</button>
+            </div>
+          </div>
           <div class="field"><label>P&L %</label><input id="m-pct" type="number" readonly style="color:var(--text2);cursor:default" placeholder="auto" /></div>
           <div class="field"><label>24h Gain %</label><input id="m-gain" type="number" step="any" /></div>
           <div class="close-reason-wrap">
@@ -1302,7 +1325,10 @@ nav {
     <div class="panel-right">
       <div class="trades-header">
         <div class="trades-title">Trade Log</div>
-        <button class="clear-btn" onclick="clearAll()">Clear all</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="clear-btn" id="refresh-prices-btn" onclick="refreshLivePrices()" title="Refresh live prices for open trades" style="color:var(--blue);border-color:rgba(74,158,255,0.3)">↻ Prices</button>
+          <button class="clear-btn" onclick="clearAll()">Clear all</button>
+        </div>
       </div>
       <div class="trade-list" id="trade-list"></div>
       <div class="empty-state" id="empty-state">
@@ -2005,7 +2031,7 @@ Analyse:
 }
 
 function buildExitPrompt() {
-  const withPrices = trades.filter(t => t.entry && t.exit && t.outcome !== 'neverentered' && t.outcome !== 'watching');
+  const withPrices = trades.filter(t => t.entry && t.exit && t.outcome !== 'neverentered' && t.outcome !== 'watching' && t.outcome !== 'entered');
   const lines = withPrices.map(t => {
     const pct = t.pct_pnl !== null ? `${t.pct_pnl.toFixed(2)}%` : 'N/A';
     const direction = t.exit < t.entry ? 'price fell ✓' : 'price rose ✗';
@@ -2290,6 +2316,7 @@ const OUTCOME_META = {
   fullwin:      { label: 'Full Win',      cls: 'b-fullwin' },
   partwin:      { label: 'Partial Win',   cls: 'b-partwin' },
   watching:     { label: 'Watching',      cls: 'b-watching' },
+  entered:      { label: 'Entered',       cls: 'b-entered' },
   partloss:     { label: 'Partial Loss',  cls: 'b-partloss' },
   stopped:      { label: 'Stopped Out',   cls: 'b-stopped' },
   neverentered: { label: 'Never Entered', cls: 'b-neverentered' }
@@ -2330,6 +2357,7 @@ function renderTrades() {
     }
     const hasShot = !!t.screenshot;
     const hasNotes = !!(t.trade_notes && t.trade_notes.trim());
+    const isEntered = t.outcome === 'entered';
     const modeBadge = t.mode === 'live'
       ? `<span style="font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:100px;background:rgba(61,214,140,0.15);color:var(--green);border:1px solid rgba(61,214,140,0.3);margin-left:4px">LIVE</span>`
       : `<span style="font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:100px;background:var(--bg4);color:var(--text3);border:1px solid var(--border);margin-left:4px">DEMO</span>`;
@@ -2338,6 +2366,16 @@ function renderTrades() {
       <img src="${t.screenshot}" onclick="openLightbox('${t.id}')" title="Click to enlarge" />
     </div>` : `<div class="tr-screenshot" id="ss-${t.id}"></div>`;
     const posSize = t.position_size ? ` · $${t.position_size.toLocaleString()}` : '';
+
+    // Live price row — only for entered trades
+    const livePriceRow = isEntered ? `
+      <div class="live-price-row" id="lpr-${t.id}">
+        <div><div class="live-price-label">Live Price</div><div class="live-price-val" id="lp-price-${t.id}">—</div></div>
+        <div><div class="live-price-label">Unrealised %</div><div id="lp-pct-${t.id}" class="live-pnl-neu">—</div></div>
+        <div><div class="live-price-label">Unrealised $</div><div id="lp-pnl-${t.id}" class="live-pnl-neu">—</div></div>
+        <div style="margin-left:auto"><span class="live-price-loading" id="lp-status-${t.id}">tap ↻ to refresh</span></div>
+      </div>` : '';
+
     return `<div class="trade-row-wrap" id="wrap-${t.id}">
       <div class="trade-row">
         <div>
@@ -2363,6 +2401,7 @@ function renderTrades() {
           <button class="del-btn" onclick="deleteTrade(${t.id})" style="margin-top:2px">×</button>
         </div>
       </div>
+      ${livePriceRow}
       ${shotHtml}
       <div class="trade-journal-wrap">
         <button class="trade-journal-toggle ${hasNotes ? 'has-note' : ''}" onclick="toggleJournal(${t.id}, this)">
@@ -2391,6 +2430,7 @@ function renderStats() {
   const fullWins = trades.filter(t => t.outcome === 'fullwin');
   const stopped = trades.filter(t => t.outcome === 'stopped');
   const neverEntered = trades.filter(t => t.outcome === 'neverentered');
+  const openTrades = trades.filter(t => ['watching','entered'].includes(t.outcome));
 
   const wr = entered.length ? (wins.length / entered.length * 100) : 0;
   const pnls = entered.map(t => t.pnl).filter(p => p !== null && !isNaN(p));
@@ -2489,7 +2529,7 @@ function renderStats() {
   const roiPct = ((equityPoints[equityPoints.length-1] - equityPoints[0]) / equityPoints[0] * 100);
 
   // Outcome counts for donut
-  const outcomeCounts = { fullwin:0, partwin:0, partloss:0, stopped:0, neverentered:0, watching:0 };
+  const outcomeCounts = { fullwin:0, partwin:0, partloss:0, stopped:0, neverentered:0, watching:0, entered:0 };
   trades.forEach(t => { if (outcomeCounts[t.outcome] !== undefined) outcomeCounts[t.outcome]++; });
 
   el.innerHTML = `
@@ -2822,9 +2862,9 @@ function drawDonut(counts, total) {
   const COLORS = {
     fullwin: '#3DD68C', partwin: '#2aa868',
     partloss: '#cc4444', stopped: '#FF5252',
-    neverentered: '#55555F', watching: '#F5C842'
+    neverentered: '#55555F', watching: '#F5C842', entered: '#4A9EFF'
   };
-  const LABELS = { fullwin: 'Full win', partwin: 'Part win', partloss: 'Part loss', stopped: 'Stopped', neverentered: 'No entry', watching: 'Watching' };
+  const LABELS = { fullwin: 'Full win', partwin: 'Part win', partloss: 'Part loss', stopped: 'Stopped', neverentered: 'No entry', watching: 'Watching', entered: 'Entered' };
   const cx = 60, cy = 60, r = 44, inner = 28;
   let angle = -Math.PI / 2;
   const entries = Object.entries(counts).filter(([,v]) => v > 0);
@@ -3584,6 +3624,88 @@ function playBeep(freq, vol, dur) {
 // Start timer immediately and keep it running always
 startCandleTimer();
 
+// ── LIVE PRICES FOR OPEN TRADES ───────────────────────────────────────────
+
+async function refreshLivePrices() {
+  const openTrades = trades.filter(t => t.outcome === 'entered' && t.coin && t.entry);
+  if (!openTrades.length) return;
+
+  const btn = document.getElementById('refresh-prices-btn');
+  if (btn) { btn.textContent = '↻ ...'; btn.disabled = true; }
+
+  // Set loading state on all open rows
+  openTrades.forEach(t => {
+    const statusEl = document.getElementById(`lp-status-${t.id}`);
+    if (statusEl) statusEl.textContent = 'fetching...';
+  });
+
+  try {
+    // Fetch all tickers in one call — much faster than per-coin requests
+    const res = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
+    const json = await res.json();
+    if (json.retCode !== 0) throw new Error(json.retMsg);
+
+    const tickerMap = {};
+    (json.result?.list || []).forEach(t => { tickerMap[t.symbol] = t; });
+
+    openTrades.forEach(trade => {
+      // Normalise symbol — ensure it ends in USDT
+      let sym = trade.coin.toUpperCase();
+      if (!sym.endsWith('USDT')) sym += 'USDT';
+      sym = sym.replace('USDT.P','USDT');
+
+      const ticker = tickerMap[sym];
+      const priceEl  = document.getElementById(`lp-price-${trade.id}`);
+      const pctEl    = document.getElementById(`lp-pct-${trade.id}`);
+      const pnlEl    = document.getElementById(`lp-pnl-${trade.id}`);
+      const statusEl = document.getElementById(`lp-status-${trade.id}`);
+
+      if (!ticker || !priceEl) return;
+
+      const currentPrice = parseFloat(ticker.lastPrice);
+      const entry = trade.entry;
+
+      // Short trade: profit when price falls below entry
+      const pctMove = ((entry - currentPrice) / entry * 100);
+      const dollarPnl = trade.position_size ? (pctMove / 100) * trade.position_size : null;
+
+      // Format price
+      function fmtLive(n) {
+        if (!n || isNaN(n)) return '—';
+        if (n >= 1000) return '$' + n.toLocaleString(undefined, {maximumFractionDigits:2});
+        if (n >= 1) return '$' + n.toFixed(4);
+        if (n >= 0.001) return '$' + n.toFixed(6);
+        return '$' + n.toFixed(8);
+      }
+
+      priceEl.textContent = fmtLive(currentPrice);
+
+      const pctCls = pctMove >= 0 ? 'live-pnl-pos' : 'live-pnl-neg';
+      pctEl.className = pctCls;
+      pctEl.textContent = (pctMove >= 0 ? '+' : '') + pctMove.toFixed(2) + '%';
+
+      if (dollarPnl !== null) {
+        pnlEl.className = dollarPnl >= 0 ? 'live-pnl-pos' : 'live-pnl-neg';
+        pnlEl.textContent = (dollarPnl >= 0 ? '+$' : '-$') + Math.abs(dollarPnl).toFixed(2);
+      } else {
+        pnlEl.className = 'live-pnl-neu';
+        pnlEl.textContent = 'add position size';
+      }
+
+      if (statusEl) statusEl.textContent = 'updated ' + new Date().toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    });
+
+  } catch (err) {
+    openTrades.forEach(t => {
+      const statusEl = document.getElementById(`lp-status-${t.id}`);
+      if (statusEl) statusEl.textContent = 'error — try again';
+    });
+    console.error('Live price error:', err);
+  } finally {
+    if (btn) { btn.textContent = '↻ Prices'; btn.disabled = false; }
+  }
+}
+
 // ── LOG TRADE FROM SIGNAL ─────────────────────────────────────────────────
 
 function logTradeFromSignal(symbol, price, gainPct, entry) {
@@ -3599,7 +3721,7 @@ function logTradeFromSignal(symbol, price, gainPct, entry) {
   document.getElementById('m-entry').value = entry.toFixed(8);
   document.getElementById('m-gain').value = gainPct.toFixed(2);
   document.getElementById('m-signal-time').value = timeStr;
-  document.getElementById('m-outcome').value = 'watching';
+  document.getElementById('m-outcome').value = 'entered';
   document.getElementById('m-mode').value = 'demo';
   // Clear exit/pnl ready for later update
   document.getElementById('m-exit').value = '';
