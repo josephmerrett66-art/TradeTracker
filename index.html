@@ -4626,7 +4626,7 @@ function buildResearchTradeRow(t) {
       <div><div class="rtrade-cell-label">Bottom</div><div class="rtrade-cell-val" style="color:${retraceActual!==null?(retraceActual>=0?'var(--green)':'var(--red)'):'var(--text3)'}">${retraceActual !== null ? retraceActual.toFixed(1) + '% ↓' : '—'}</div></div>
       <button class="rtrade-expand-btn" id="rexp-${t.id}">▼ Research</button>
     </div>
-    <div class="rtrade-detail" id="rtd-${t.id}">
+    <div class="rtrade-detail" id="rtd-${t.id}" onclick="event.stopPropagation()">
       ${buildResearchDetail(t)}
     </div>
   </div>`;
@@ -4724,15 +4724,15 @@ function buildResearchDetail(t) {
         <div class="rtrade-section-label">Price Data</div>
         <div class="rtrade-field">
           <label>Local Bottom Price $</label>
-          <input type="number" step="any" id="rf-bottom-${t.id}" value="${t.r_local_bottom ?? ''}" placeholder="Lowest price before reversal" oninput="rAutoSave(${t.id})" />
+          <input type="number" step="any" id="rf-bottom-${t.id}" value="${t.r_local_bottom ?? ''}" placeholder="Lowest price before reversal" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()" />
         </div>
         <div class="rtrade-field">
           <label>Price 2hrs After Close $</label>
-          <input type="number" step="any" id="rf-2h-${t.id}" value="${t.r_price_2h ?? ''}" placeholder="Where was price 2hrs later?" oninput="rAutoSave(${t.id})" />
+          <input type="number" step="any" id="rf-2h-${t.id}" value="${t.r_price_2h ?? ''}" placeholder="Where was price 2hrs later?" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()" />
         </div>
         <div class="rtrade-field">
           <label>End of Day Price $</label>
-          <input type="number" step="any" id="rf-eod-${t.id}" value="${t.r_price_eod ?? ''}" placeholder="Price at market close" oninput="rAutoSave(${t.id})" />
+          <input type="number" step="any" id="rf-eod-${t.id}" value="${t.r_price_eod ?? ''}" placeholder="Price at market close" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()" />
         </div>
       </div>
       <div>
@@ -4758,7 +4758,7 @@ function buildResearchDetail(t) {
     </div>
     <div class="rtrade-field">
       <label>Research Findings</label>
-      <textarea id="rf-findings-${t.id}" placeholder="What did you observe? What would you do differently? Did the coin behave as expected?" oninput="rAutoSave(${t.id})">${t.r_findings ?? ''}</textarea>
+      <textarea id="rf-findings-${t.id}" placeholder="What did you observe? What would you do differently? Did the coin behave as expected?" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()">${t.r_findings ?? ''}</textarea>
     </div>
     <div style="display:flex;align-items:center;margin-top:4px">
       <button class="rtrade-save-btn" onclick="rSave(${t.id})">Save Research</button>
