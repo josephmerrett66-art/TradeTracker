@@ -1002,7 +1002,33 @@ nav {
 .sig-verdict.red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
 .sig-verdict.yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow-border); }
 
-/* Grade badge */
+/* TradingView chart panel */
+.sig-chart-btn {
+  margin-top: 8px; width: 100%; padding: 9px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2);
+  font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.sig-chart-btn:hover { border-color: var(--blue-border); background: var(--blue-dim); color: var(--blue); }
+.sig-chart-btn.open { border-color: var(--blue-border); background: var(--blue-dim); color: var(--blue); }
+.sig-chart-panel {
+  display: none; margin-top: 10px;
+  border-radius: var(--radius-sm); overflow: hidden;
+  border: 1px solid var(--border2); background: var(--bg3);
+  height: 420px; position: relative;
+}
+.sig-chart-panel.open { display: block; }
+.sig-chart-loading {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center;
+  color: var(--text3); font-size: 12px; font-family: 'DM Mono', monospace;
+  gap: 8px; flex-direction: column;
+}
+@media (max-width: 768px) {
+  .sig-chart-panel { height: 320px; }
+}
 .sig-grade {
   display: inline-flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 8px;
@@ -3208,8 +3234,12 @@ function buildSignalCard(t, isSignal, volData) {
     useBtnHtml = `<button class="sig-use-btn" onclick="useSignalInCalc('${coin}USDT', ${price.toFixed(8)}, ${gainPct.toFixed(2)})">→ Open in Calculator</button>`;
   }
 
+  const cardId = `card-${t.symbol}`;
+  const chartPanelId = `chart-${t.symbol}`;
+  const chartBtnId = `chartbtn-${t.symbol}`;
+
   return `
-    <div class="sig-coin-card ${isSignal ? 'signal' : ''} grade-${grade}">
+    <div class="sig-coin-card ${isSignal ? 'signal' : ''} grade-${grade}" id="${cardId}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
           <div>
@@ -3227,6 +3257,16 @@ function buildSignalCard(t, isSignal, volData) {
       ${checklistHtml}
       ${levelsHtml}
       ${useBtnHtml}
+      <button class="sig-chart-btn" id="${chartBtnId}" onclick="toggleChart('${t.symbol}', '${coin}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        View 15m Chart
+      </button>
+      <div class="sig-chart-panel" id="${chartPanelId}">
+        <div class="sig-chart-loading">
+          <div class="spinner" style="border-color:rgba(74,158,255,0.2);border-top-color:var(--blue)"></div>
+          Loading chart...
+        </div>
+      </div>
     </div>`;
 }
 
@@ -3244,6 +3284,61 @@ function useSignalInCalc(symbol, price, gain) {
   // Scroll to top of calc page
   document.getElementById('page-calc')?.scrollTo(0, 0);
   window.scrollTo(0, 0);
+}
+// ── TRADINGVIEW CHART ─────────────────────────────────────────────────────
+
+function toggleChart(symbol, coin) {
+  const panel = document.getElementById(`chart-${symbol}`);
+  const btn = document.getElementById(`chartbtn-${symbol}`);
+  if (!panel || !btn) return;
+
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    btn.classList.remove('open');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> View 15m Chart`;
+    panel.innerHTML = `<div class="sig-chart-loading"><div class="spinner" style="border-color:rgba(74,158,255,0.2);border-top-color:var(--blue)"></div>Loading chart...</div>`;
+  } else {
+    panel.classList.add('open');
+    btn.classList.add('open');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Hide Chart`;
+    loadTVChart(symbol, coin, panel);
+  }
+}
+
+function loadTVChart(symbol, coin, panel) {
+  // Bybit perpetual symbol format for TradingView: BYBIT:BTCUSDT.P
+  const tvSymbol = `BYBIT:${symbol}.P`;
+
+  const container = document.createElement('div');
+  container.style.cssText = 'width:100%;height:100%;';
+  panel.innerHTML = '';
+  panel.appendChild(container);
+
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: tvSymbol,
+    interval: '15',
+    timezone: 'Australia/Melbourne',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    backgroundColor: '#111114',
+    gridColor: 'rgba(255,255,255,0.04)',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    studies: ['STD;Volume'],
+    withdateranges: false,
+    hide_side_toolbar: true,
+    allow_symbol_change: false,
+    support_host: 'https://www.tradingview.com'
+  });
+
+  container.appendChild(script);
 }
 
 </script>
