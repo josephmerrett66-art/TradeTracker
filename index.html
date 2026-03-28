@@ -777,14 +777,21 @@ nav {
     border-top: 1px solid var(--border);
     backdrop-filter: blur(20px);
     padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  #bottom-nav::-webkit-scrollbar { display: none; }
   .bn-tab {
-    flex: 1; display: flex; flex-direction: column;
+    flex: 0 0 auto;
+    min-width: 64px;
+    display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 3px;
     background: none; border: none; cursor: pointer;
     color: var(--text3); font-family: 'DM Mono', monospace;
     font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px;
-    padding: 6px 2px; transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+    padding: 6px 8px; transition: color 0.15s; -webkit-tap-highlight-color: transparent;
   }
   .bn-tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; }
   .bn-tab.active { color: var(--yellow); }
@@ -1064,15 +1071,30 @@ nav {
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-4"/></svg>Stats
   </button>
   <button class="bn-tab" id="bn-signals" onclick="showPage('signals',this)">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a13 13 0 0 0 0 17M20.5 3.5a13 13 0 0 1 0 17"/></svg>Signals
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg>Signals
   </button>
   <button class="bn-tab" id="bn-calc" onclick="showPage('calc',this)">
     <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>Calc
   </button>
-  <button class="bn-tab" id="bn-cheat" onclick="showPage('cheat',this)">
-    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Cheat
+  <button class="bn-tab" id="bn-more" onclick="toggleMoreMenu(this)">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>More
   </button>
 </nav>
+
+<!-- MORE MENU — slides up above bottom nav -->
+<div id="more-menu" style="display:none;position:fixed;bottom:62px;left:0;right:0;z-index:199;background:rgba(17,17,20,0.98);border-top:1px solid var(--border2);backdrop-filter:blur(20px);padding:10px;padding-bottom:env(safe-area-inset-bottom)">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:420px;margin:0 auto">
+    <button onclick="showPage('review',document.getElementById('bn-more'));closeMoreMenu()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Review
+    </button>
+    <button onclick="showPage('notes',document.getElementById('bn-more'));closeMoreMenu()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Notes
+    </button>
+    <button onclick="showPage('cheat',document.getElementById('bn-more'));closeMoreMenu()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Cheat
+    </button>
+  </div>
+</div>
 <div id="page-log" class="page active">
   <div class="log-layout">
     <div class="panel-left">
@@ -1411,6 +1433,7 @@ function updateNavCount() {
 }
 
 function showPage(p, callerEl) {
+  closeMoreMenu();
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.bn-tab').forEach(el => el.classList.remove('active'));
@@ -1435,9 +1458,40 @@ function showPage(p, callerEl) {
 function applyMobileNav() {
   const isMobile = window.innerWidth <= 768;
   document.getElementById('bottom-nav').style.display = isMobile ? 'flex' : 'none';
+  if (!isMobile) closeMoreMenu();
 }
 applyMobileNav();
 window.addEventListener('resize', applyMobileNav);
+
+function toggleMoreMenu(btn) {
+  const menu = document.getElementById('more-menu');
+  const isOpen = menu.style.display !== 'none';
+  if (isOpen) {
+    closeMoreMenu();
+  } else {
+    menu.style.display = 'block';
+    btn.classList.add('active');
+    // Close if tapping outside
+    setTimeout(() => {
+      document.addEventListener('click', closeMoreMenuOutside, { once: true });
+    }, 50);
+  }
+}
+
+function closeMoreMenu() {
+  const menu = document.getElementById('more-menu');
+  if (menu) menu.style.display = 'none';
+  const btn = document.getElementById('bn-more');
+  if (btn) btn.classList.remove('active');
+}
+
+function closeMoreMenuOutside(e) {
+  const menu = document.getElementById('more-menu');
+  const btn = document.getElementById('bn-more');
+  if (menu && !menu.contains(e.target) && e.target !== btn && !btn?.contains(e.target)) {
+    closeMoreMenu();
+  }
+}
 
 // ── NOTES ─────────────────────────────────────────────────────────────────
 
