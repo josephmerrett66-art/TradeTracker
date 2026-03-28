@@ -4661,7 +4661,7 @@ function buildResearchDetail(t) {
   }
 
   const computedHtml = `
-    <div class="rtrade-computed">
+    <div class="rtrade-computed" id="rcomp-${t.id}">
       <div class="rtrade-stat">
         <div class="rtrade-stat-label">Entry</div>
         <div class="rtrade-stat-val" style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(t.entry)}</div>
@@ -4828,21 +4828,55 @@ function rSetStars(id, rating) {
 function rSave(id, silent) {
   const trade = trades.find(t => t.id === id);
   if (!trade) return;
-  const bottom = parseFloat(document.getElementById(`rf-bottom-${id}`)?.value);
-  const price2h = parseFloat(document.getElementById(`rf-2h-${id}`)?.value);
-  const priceEod = parseFloat(document.getElementById(`rf-eod-${id}`)?.value);
-  const findings = document.getElementById(`rf-findings-${id}`)?.value ?? '';
+  const bottomEl  = document.getElementById(`rf-bottom-${id}`);
+  const price2hEl = document.getElementById(`rf-2h-${id}`);
+  const priceEodEl= document.getElementById(`rf-eod-${id}`);
+  const findingsEl= document.getElementById(`rf-findings-${id}`);
 
-  if (!isNaN(bottom) && document.getElementById(`rf-bottom-${id}`)?.value !== '') trade.r_local_bottom = bottom;
-  else if (document.getElementById(`rf-bottom-${id}`)?.value === '') trade.r_local_bottom = null;
-  if (!isNaN(price2h) && document.getElementById(`rf-2h-${id}`)?.value !== '') trade.r_price_2h = price2h;
-  else if (document.getElementById(`rf-2h-${id}`)?.value === '') trade.r_price_2h = null;
-  if (!isNaN(priceEod) && document.getElementById(`rf-eod-${id}`)?.value !== '') trade.r_price_eod = priceEod;
-  else if (document.getElementById(`rf-eod-${id}`)?.value === '') trade.r_price_eod = null;
-  trade.r_findings = findings;
+  const bottom   = parseFloat(bottomEl?.value);
+  const price2h  = parseFloat(price2hEl?.value);
+  const priceEod = parseFloat(priceEodEl?.value);
+
+  trade.r_local_bottom = (!isNaN(bottom)   && bottomEl?.value   !== '') ? bottom   : null;
+  trade.r_price_2h     = (!isNaN(price2h)  && price2hEl?.value  !== '') ? price2h  : null;
+  trade.r_price_eod    = (!isNaN(priceEod) && priceEodEl?.value !== '') ? priceEod : null;
+  if (findingsEl) trade.r_findings = findingsEl.value;
 
   save();
 
+  // ── Only update the computed stats block — NEVER re-render the whole panel ──
+  const compEl = document.getElementById(`rcomp-${id}`);
+  if (compEl) {
+    const p24ago = (trade.entry && trade.gain_24h) ? trade.entry / (1 + trade.gain_24h / 100) : null;
+    const target60 = (trade.entry && p24ago) ? trade.entry - (trade.entry - p24ago) * 0.60 : null;
+    const target60pct = (trade.entry && target60) ? ((trade.entry - target60) / trade.entry * 100) : null;
+    const retraceActual = (trade.entry && trade.r_local_bottom) ? ((trade.entry - trade.r_local_bottom) / trade.entry * 100) : null;
+    const bottomVsTarget = (retraceActual !== null && target60pct !== null) ? (retraceActual - target60pct) : null;
+    const pct2h  = (trade.entry && trade.r_price_2h)  ? ((trade.entry - trade.r_price_2h)  / trade.entry * 100) : null;
+    const pctEod = (trade.entry && trade.r_price_eod) ? ((trade.entry - trade.r_price_eod) / trade.entry * 100) : null;
+
+    function fmtN(n) {
+      if (n === null || n === undefined || isNaN(n)) return '—';
+      if (n >= 1000) return '$' + n.toLocaleString(undefined,{maximumFractionDigits:2});
+      if (n >= 1) return '$' + n.toFixed(4);
+      if (n >= 0.001) return '$' + n.toFixed(6);
+      return '$' + n.toFixed(8);
+    }
+    function statEl(label, val, color) {
+      return `<div class="rtrade-stat"><div class="rtrade-stat-label">${label}</div><div class="rtrade-stat-val" style="${color ? 'color:' + color : ''}">${val}</div></div>`;
+    }
+
+    compEl.innerHTML =
+      statEl('Entry', `<span style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(trade.entry)}</span>`) +
+      statEl('60% Target', `<span style="font-size:13px;font-family:'DM Mono',monospace">${target60 ? fmtN(target60) : '—'}</span>`, 'var(--yellow)') +
+      statEl('Local Bottom', `<span style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(trade.r_local_bottom)}</span>`, 'var(--blue)') +
+      (retraceActual !== null ? statEl('% Down to Bottom', retraceActual.toFixed(2) + '%', 'var(--green)') : '') +
+      (bottomVsTarget !== null ? statEl('Bottom vs Target', (bottomVsTarget >= 0 ? '+' : '') + bottomVsTarget.toFixed(2) + '%', bottomVsTarget >= 0 ? 'var(--green)' : 'var(--red)') : '') +
+      (pct2h  !== null ? statEl('Move 2h After',    (pct2h  >= 0 ? '+' : '') + pct2h.toFixed(2)  + '%', pct2h  >= 0 ? 'var(--green)' : 'var(--red)') : '') +
+      (pctEod !== null ? statEl('Move End of Day',  (pctEod >= 0 ? '+' : '') + pctEod.toFixed(2) + '%', pctEod >= 0 ? 'var(--green)' : 'var(--red)') : '');
+  }
+
+  // Status indicator
   const statusEl = document.getElementById(`rss-${id}`);
   if (statusEl) {
     statusEl.textContent = 'saved ✓';
@@ -4850,23 +4884,14 @@ function rSave(id, silent) {
     setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'rtrade-save-status'; }, 2000);
   }
 
-  // Refresh computed section
-  const detail = document.getElementById(`rtd-${id}`);
-  if (detail && detail.classList.contains('open')) {
-    detail.innerHTML = buildResearchDetail(trade);
-  }
-
   // Update research tag on summary row
   const hasResearch = !!(trade.r_local_bottom || trade.r_price_2h || trade.r_price_eod || trade.r_hit_target || trade.r_after_4pm || trade.r_exit_quality || trade.r_findings);
   const tagContainer = document.querySelector(`#rtr-${id} .rtrade-date`)?.parentElement;
-  if (tagContainer) {
-    const existing = tagContainer.querySelector('.rtrade-has-research');
-    if (hasResearch && !existing) {
-      const tag = document.createElement('div');
-      tag.className = 'rtrade-has-research';
-      tag.textContent = '✓ researched';
-      tagContainer.appendChild(tag);
-    }
+  if (tagContainer && hasResearch && !tagContainer.querySelector('.rtrade-has-research')) {
+    const tag = document.createElement('div');
+    tag.className = 'rtrade-has-research';
+    tag.textContent = '✓ researched';
+    tagContainer.appendChild(tag);
   }
 }
 
