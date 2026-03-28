@@ -1622,7 +1622,7 @@ nav {
         <div class="cheat-card-title">Signal Filters — All Must Be Met</div>
         <div class="cheat-filter-row"><span class="cheat-filter-label">Min 24h gain</span><span class="cheat-filter-val">30%+</span></div>
         <div class="cheat-filter-row"><span class="cheat-filter-label">Vol spike</span><span class="cheat-filter-val">8x+ avg (800%+)</span></div>
-        <div class="cheat-filter-row"><span class="cheat-filter-label">Signal window</span><span class="cheat-filter-val blue">8am – 12pm AEST</span></div>
+        <div class="cheat-filter-row"><span class="cheat-filter-label">Signal window</span><span class="cheat-filter-val blue">7am – 12pm AEST</span></div>
         <div class="cheat-filter-row"><span class="cheat-filter-label">Hard close</span><span class="cheat-filter-val red">4pm AEST</span></div>
         <div class="cheat-filter-row"><span class="cheat-filter-label">Coin universe</span><span class="cheat-filter-val white">Binance USDT · vol ranks 51–850</span></div>
         <div class="cheat-filter-row"><span class="cheat-filter-label">Blacklist</span><span class="cheat-filter-val red">AXS</span></div>
@@ -1667,7 +1667,7 @@ nav {
       <div class="cheat-card">
         <div class="cheat-card-title">Execution Steps</div>
         <div class="steps-list">
-          <div class="step-row"><div class="step-num">1</div><div><div class="step-title">Morning scan — 8am AEST</div><div class="step-desc">Check screener for coins up <strong>30%+</strong> with <strong>8x+ vol spike</strong>. Signal must appear 8am–12pm AEST.</div></div></div>
+          <div class="step-row"><div class="step-num">1</div><div><div class="step-title">Morning scan — 7am AEST</div><div class="step-desc">Check screener for coins up <strong>30%+</strong> with <strong>8x+ vol spike</strong>. Signal must appear 7am–12pm AEST.</div></div></div>
           <div class="step-row"><div class="step-num">2</div><div><div class="step-title">Calculate levels</div><div class="step-desc">Use the formula to get your entry, stop, and target. Plot on TradingView.</div></div></div>
           <div class="step-row"><div class="step-num">3</div><div><div class="step-title">Set alert at entry price</div><div class="step-desc"><strong>Do NOT place the order yet.</strong> Wait for price to pull back to entry zone.</div></div></div>
           <div class="step-row"><div class="step-num">4</div><div><div class="step-title">Wait for 2 red candles</div><div class="step-desc">Once alert fires, watch for <strong>2 consecutive red 15m candles</strong> in entry zone before entering.</div></div></div>
@@ -1697,7 +1697,7 @@ nav {
         <div class="cheat-card-title">Non-Negotiable Rules</div>
         <div class="rules-list">
           <div class="rule-row"><div class="rule-icon">🕓</div><div class="rule-text">Close <strong class="red">ALL positions by 4pm AEST</strong> — no overnight holds under any circumstances</div></div>
-          <div class="rule-row"><div class="rule-icon">📡</div><div class="rule-text">Only take signals that fired <strong>8am–12pm AEST</strong> — afternoon signals underperform</div></div>
+          <div class="rule-row"><div class="rule-icon">📡</div><div class="rule-text">Only take signals that fired <strong>7am–12pm AEST</strong> — afternoon signals underperform</div></div>
           <div class="rule-row"><div class="rule-icon">🕯</div><div class="rule-text">Wait for <strong>2 consecutive red 15m candles</strong> in entry zone before entering</div></div>
           <div class="rule-row"><div class="rule-icon">📌</div><div class="rule-text"><strong>One position at a time</strong> — never run concurrent trades</div></div>
           <div class="rule-row"><div class="rule-icon">🚫</div><div class="rule-text"><strong>No leverage</strong> — trade at 1x only until 100+ live trades proven</div></div>
@@ -3328,8 +3328,9 @@ function runCalc() {
 // ── TIME OF DAY STATS (added into renderStats HTML) ───────────────────────
 
 function buildTodChart(entered) {
-  // Bucket into 1-hour slots within the 8am–12pm window + outside
+  // Bucket into 1-hour slots within the 7am–12pm window + outside
   const buckets = [
+    { label: '7–8am',   min: 7,  max: 8  },
     { label: '8–9am',   min: 8,  max: 9  },
     { label: '9–10am',  min: 9,  max: 10 },
     { label: '10–11am', min: 10, max: 11 },
@@ -3344,7 +3345,7 @@ function buildTodChart(entered) {
     if (b.min === -1) {
       ts = withTime.filter(t => {
         const h = parseInt(t.signal_time?.split(':')[0] || '-1');
-        return h < 8 || h >= 12;
+        return h < 7 || h >= 12;
       });
     } else {
       ts = withTime.filter(t => {
@@ -3537,7 +3538,7 @@ function buildSignalCard(t, isSignal, volData) {
         ? chk(c2_spike?'✓':'✕', c2_spike?'pass':'fail', 'Vol spike ≥8x avg', spike.toFixed(1)+'x', c2_spike?'pass':'fail')
         : chk('?', 'warn', 'Vol spike ≥8x avg', 'unavailable', 'grey')}
       ${chk(c3_black?'✓':'✕', c3_black?'pass':'fail', 'Not blacklisted (AXS)', c3_black?'clear':'BLACKLISTED', c3_black?'pass':'fail')}
-      ${chk('?', 'warn', 'Signal time 8am–12pm AEST', 'manual check', 'grey')}
+      ${chk('?', 'warn', 'Signal time 7am–12pm AEST', 'manual check', 'grey')}
       ${chk('?', 'warn', '2 red 15m candles at entry', 'manual check', 'grey')}
       ${chk('?', 'warn', 'No open position', 'manual check', 'grey')}
     </div>`;
@@ -4051,7 +4052,7 @@ function loadTVChart(symbol, coin, panel) {
 const AXIOM_QUESTIONS = [
   {
     id: 'window',
-    ask: "Did you trade within the <strong>8am–12pm AEST window only</strong>?",
+    ask: "Did you trade within the <strong>7am–12pm AEST window only</strong>?",
     options: [
       { label: 'Yes', value: 'yes', cls: 'yes' },
       { label: 'No — traded outside', value: 'no', cls: 'no' },
@@ -4126,14 +4127,14 @@ const AXIOM_RESPONSES = {
     "Significant deviation from the system today. I need to ask you something directly: are you trading FADE, or are you improvising with FADE as a starting point?\n\nBecause there's a version of this where the rules feel like suggestions rather than constraints. And that version will produce inconsistent results that you can never fully analyse, because you're not running a consistent process. You're running a vibe with a framework nearby.\n\nThe system works when you run the system. Not a modified version. Not 80% of it. The system.",
     "The process broke down in multiple places today. Not catastrophically — but noticeably. And noticeably is where you need to pay attention.\n\nHere's what I observe about C-grade sessions: they often follow either a strong win or a frustrating loss. Emotional residue from the previous outcome bleeds into execution. You're not fully present in the process — you're still reacting to something that already happened.\n\nIs that what happened today? If so, that's the work. Not the trading rules — the mental reset between sessions.",
     "C-grade discipline produces C-grade results across a large sample. You know this.\n\nI'm not going to dress this up. Multiple rules were either skipped or partially followed, and in a strategy as precise as FADE, partial execution is the same as no execution for those elements. You can't half-follow a checklist.\n\nTomorrow morning, before the window opens, read the cheatsheet. All of it. Then run the pre-trade checks like you mean them. Come back here at 4pm and let's see a different grade.",
-    "More than one rule skipped. Each one felt harmless. None of them were.\n\nThis is the thing about rules in a systematic strategy: they exist because the backtest said they matter. The 8am–12pm window, the candle confirmation, the position sizing — those aren't aesthetic preferences. They're filters that define the edge. When you skip one, you're not trading FADE anymore. You're trading a diluted version of FADE with worse expected value.\n\nGet back to the system tomorrow. Fully."
+    "More than one rule skipped. Each one felt harmless. None of them were.\n\nThis is the thing about rules in a systematic strategy: they exist because the backtest said they matter. The 7am–12pm window, the candle confirmation, the position sizing — those aren't aesthetic preferences. They're filters that define the edge. When you skip one, you're not trading FADE anymore. You're trading a diluted version of FADE with worse expected value.\n\nGet back to the system tomorrow. Fully."
   ],
   D: [
     "The system didn't fail today. You didn't follow the system.\n\nI want to be direct with you because that's more useful than being kind. Multiple rules were broken, and at least one of them was a significant one. That means today's results — good or bad — tell you almost nothing about whether FADE works. You weren't running FADE today. You were running something else.\n\nThat's recoverable. But only if you're honest about it, which means not rationalising the deviations, not saying the setup 'justified' the exception. There are no justified exceptions in a systematic process. There are only deviations and their consequences.",
     "Significant rule breaks today. I'm not going to grade this gently.\n\nHere's what happens when discipline breaks down: the results become random. You might win, you might lose, but you can't learn anything from either outcome because the input was inconsistent. You're putting capital at risk without the edge that makes the risk justified. That's not trading — that's gambling with extra steps.\n\nTomorrow is a clean slate. But tonight, I need you to sit with what happened. Not the trade results — the decisions that led to them. Where did the system break down? When did you decide it didn't apply? Write it down.",
     "Multiple rule breaks. I'll tell you what this looks like from the outside.\n\nA bad process that makes money is a future loss waiting to happen. A bad process that loses money is just confirming what the data will show over time. Either way, today was not FADE. Today was reactive trading dressed in FADE's language.\n\nThe reset is simple in principle and hard in practice: tomorrow you follow every rule, regardless of how the setup feels. Not because the rules always produce wins — but because following rules produces analysable data, and analysable data produces improvement. Rule breaks produce noise.",
     "This session doesn't reflect your strategy. It reflects your emotional state.\n\nI say that without judgment. Emotional interference is the most common failure mode for systematic traders. The market creates urgency, fear, excitement — and those states override the prefrontal cortex's ability to follow a checklist. That's not weakness. That's neurology. But it's also something you can train.\n\nTomorrow, before the window opens: breathe, read the plan, set your intention. The signal window is 4 hours. Four hours of discipline is what's required. Not 24 hours — four. You can do four hours. Come back here at 4pm.",
-    "Hard session. Multiple systems offline.\n\nI'm not going to pile on. You know what happened — you answered the questions. What I want to focus on is the reset, because that's what matters now.\n\nTonight: log every trade, write a note on each one, and identify the exact moment in each decision where the system was overridden. Not to punish yourself — to understand the trigger. Tomorrow: the window opens at 8am. One signal at a time. If the first setup doesn't meet every filter, you pass. The discipline starts with the first decision of the session, not somewhere in the middle."
+    "Hard session. Multiple systems offline.\n\nI'm not going to pile on. You know what happened — you answered the questions. What I want to focus on is the reset, because that's what matters now.\n\nTonight: log every trade, write a note on each one, and identify the exact moment in each decision where the system was overridden. Not to punish yourself — to understand the trigger. Tomorrow: the window opens at 7am. One signal at a time. If the first setup doesn't meet every filter, you pass. The discipline starts with the first decision of the session, not somewhere in the middle."
   ]
 };
 
@@ -4379,7 +4380,7 @@ function renderAxiomReport() {
           <div class="axiom-grade-sub">${today} · ${gradeSubs[grade]}</div>
         </div>
       </div>
-      ${scoreRow('Signal window (8–12am)', a.window, ['yes','none'], ['no'], ['none'])}
+      ${scoreRow('Signal window (7am–12pm)', a.window, ['yes','none'], ['no'], ['none'])}
       ${scoreRow('2 red candle confirmation', a.candles, ['yes','none'], ['no'], ['none'])}
       ${scoreRow('Position sizing', a.sizing, ['yes'], ['no'], [])}
       ${scoreRow('Closed by 4pm', a.close, ['yes','none'], ['no'], ['none'])}
@@ -4411,7 +4412,7 @@ function saveAxiomToNotes() {
 
   const noteText = `AXIOM Grade: ${grade} — ${gradeTitles[grade]}
 
-Window (8–12am): ${a.window}
+Window (7am–12pm): ${a.window}
 2 red candles: ${a.candles}
 Position sizing: ${a.sizing}
 Closed by 4pm: ${a.close}
