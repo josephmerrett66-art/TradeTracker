@@ -4667,7 +4667,11 @@ function buildResearchDetail(t) {
         <div class="rtrade-stat-val" style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(t.entry)}</div>
       </div>
       <div class="rtrade-stat">
-        <div class="rtrade-stat-label">60% Target</div>
+        <div class="rtrade-stat-label">Actual Exit</div>
+        <div class="rtrade-stat-val" style="font-size:13px;font-family:'DM Mono',monospace;color:${t.exit ? (t.exit < t.entry ? 'var(--green)' : 'var(--red)') : 'var(--text3)'}">${fmtN(t.exit)}</div>
+      </div>
+      <div class="rtrade-stat">
+        <div class="rtrade-stat-label">Intended Exit (60%)</div>
         <div class="rtrade-stat-val" style="font-size:13px;font-family:'DM Mono',monospace;color:var(--yellow)">${target60 ? fmtN(target60) : '—'}</div>
       </div>
       <div class="rtrade-stat">
@@ -4683,7 +4687,7 @@ function buildResearchDetail(t) {
         <div class="rtrade-stat-val" style="color:${bottomVsTarget >= 0 ? 'var(--green)' : 'var(--red)'}">${bottomVsTarget >= 0 ? '+' : ''}${bottomVsTarget.toFixed(2)}%</div>
       </div>` : ''}
       ${pct2h !== null ? `<div class="rtrade-stat">
-        <div class="rtrade-stat-label">Move 2h After</div>
+        <div class="rtrade-stat-label">Move 24h After</div>
         <div class="rtrade-stat-val" style="color:${pct2h >= 0 ? 'var(--green)' : 'var(--red)'}">${pct2h >= 0 ? '+' : ''}${pct2h.toFixed(2)}%</div>
       </div>` : ''}
       ${pctEod !== null ? `<div class="rtrade-stat">
@@ -4727,8 +4731,8 @@ function buildResearchDetail(t) {
           <input type="number" step="any" id="rf-bottom-${t.id}" value="${t.r_local_bottom ?? ''}" placeholder="Lowest price before reversal" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()" />
         </div>
         <div class="rtrade-field">
-          <label>Price 2hrs After Close $</label>
-          <input type="number" step="any" id="rf-2h-${t.id}" value="${t.r_price_2h ?? ''}" placeholder="Where was price 2hrs later?" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()" />
+          <label>Price 24hrs After Close $</label>
+          <input type="number" step="any" id="rf-2h-${t.id}" value="${t.r_price_2h ?? ''}" placeholder="Price 24hrs after you closed" oninput="rAutoSave(${t.id})" onclick="event.stopPropagation()" />
         </div>
         <div class="rtrade-field">
           <label>End of Day Price $</label>
@@ -4868,11 +4872,12 @@ function rSave(id, silent) {
 
     compEl.innerHTML =
       statEl('Entry', `<span style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(trade.entry)}</span>`) +
-      statEl('60% Target', `<span style="font-size:13px;font-family:'DM Mono',monospace">${target60 ? fmtN(target60) : '—'}</span>`, 'var(--yellow)') +
+      statEl('Actual Exit', `<span style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(trade.exit)}</span>`, trade.exit ? (trade.exit < trade.entry ? 'var(--green)' : 'var(--red)') : 'var(--text3)') +
+      statEl('Intended Exit (60%)', `<span style="font-size:13px;font-family:'DM Mono',monospace">${target60 ? fmtN(target60) : '—'}</span>`, 'var(--yellow)') +
       statEl('Local Bottom', `<span style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(trade.r_local_bottom)}</span>`, 'var(--blue)') +
       (retraceActual !== null ? statEl('% Down to Bottom', retraceActual.toFixed(2) + '%', 'var(--green)') : '') +
       (bottomVsTarget !== null ? statEl('Bottom vs Target', (bottomVsTarget >= 0 ? '+' : '') + bottomVsTarget.toFixed(2) + '%', bottomVsTarget >= 0 ? 'var(--green)' : 'var(--red)') : '') +
-      (pct2h  !== null ? statEl('Move 2h After',    (pct2h  >= 0 ? '+' : '') + pct2h.toFixed(2)  + '%', pct2h  >= 0 ? 'var(--green)' : 'var(--red)') : '') +
+      (pct2h  !== null ? statEl('Move 24h After',    (pct2h  >= 0 ? '+' : '') + pct2h.toFixed(2)  + '%', pct2h  >= 0 ? 'var(--green)' : 'var(--red)') : '') +
       (pctEod !== null ? statEl('Move End of Day',  (pctEod >= 0 ? '+' : '') + pctEod.toFixed(2) + '%', pctEod >= 0 ? 'var(--green)' : 'var(--red)') : '');
   }
 
