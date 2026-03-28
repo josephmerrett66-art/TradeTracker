@@ -4682,10 +4682,6 @@ function buildResearchDetail(t) {
         <div class="rtrade-stat-label">% Down to Bottom</div>
         <div class="rtrade-stat-val" style="color:var(--green)">${retraceActual.toFixed(2)}%</div>
       </div>` : ''}
-      ${bottomVsTarget !== null ? `<div class="rtrade-stat">
-        <div class="rtrade-stat-label">Bottom vs Target</div>
-        <div class="rtrade-stat-val" style="color:${bottomVsTarget >= 0 ? 'var(--green)' : 'var(--red)'}">${bottomVsTarget >= 0 ? '+' : ''}${bottomVsTarget.toFixed(2)}%</div>
-      </div>` : ''}
       ${pct2h !== null ? `<div class="rtrade-stat">
         <div class="rtrade-stat-label">Move 24h After</div>
         <div class="rtrade-stat-val" style="color:${pct2h >= 0 ? 'var(--green)' : 'var(--red)'}">${pct2h >= 0 ? '+' : ''}${pct2h.toFixed(2)}%</div>
@@ -4876,7 +4872,6 @@ function rSave(id, silent) {
       statEl('Intended Exit (60%)', `<span style="font-size:13px;font-family:'DM Mono',monospace">${target60 ? fmtN(target60) : '—'}</span>`, 'var(--yellow)') +
       statEl('Local Bottom', `<span style="font-size:13px;font-family:'DM Mono',monospace">${fmtN(trade.r_local_bottom)}</span>`, 'var(--blue)') +
       (retraceActual !== null ? statEl('% Down to Bottom', retraceActual.toFixed(2) + '%', 'var(--green)') : '') +
-      (bottomVsTarget !== null ? statEl('Bottom vs Target', (bottomVsTarget >= 0 ? '+' : '') + bottomVsTarget.toFixed(2) + '%', bottomVsTarget >= 0 ? 'var(--green)' : 'var(--red)') : '') +
       (pct2h  !== null ? statEl('Move 24h After',    (pct2h  >= 0 ? '+' : '') + pct2h.toFixed(2)  + '%', pct2h  >= 0 ? 'var(--green)' : 'var(--red)') : '') +
       (pctEod !== null ? statEl('Move End of Day',  (pctEod >= 0 ? '+' : '') + pctEod.toFixed(2) + '%', pctEod >= 0 ? 'var(--green)' : 'var(--red)') : '');
   }
