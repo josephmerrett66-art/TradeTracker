@@ -936,6 +936,59 @@ nav {
 .refresh-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.5; transition: transform 0.6s ease; }
 .refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
 .sig-last-updated { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+/* Candle timer bar */
+.candle-timer-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  margin-bottom: 1.25rem;
+}
+.candle-timer-block { display: flex; flex-direction: column; gap: 2px; }
+.candle-timer-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.candle-timer-val {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px;
+  letter-spacing: -1px; color: var(--text); line-height: 1;
+  transition: color 0.3s;
+}
+.candle-timer-val.urgent { color: var(--red); }
+.candle-timer-val.soon   { color: var(--yellow); }
+.candle-timer-val.ok     { color: var(--green); }
+.candle-timer-progress {
+  flex: 1; min-width: 120px; height: 6px;
+  background: var(--bg4); border-radius: 3px; overflow: hidden;
+}
+.candle-timer-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--green); transition: width 1s linear, background 0.3s;
+}
+.candle-timer-fill.urgent { background: var(--red); }
+.candle-timer-fill.soon   { background: var(--yellow); }
+
+/* Alarm button */
+.alarm-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text2); font-family: 'DM Mono', monospace;
+  font-size: 12px; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.alarm-btn:hover { border-color: var(--border2); background: var(--bg4); }
+.alarm-btn.armed { background: var(--yellow-dim); border-color: var(--yellow-border); color: var(--yellow); }
+.alarm-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+/* Per-card candle timer */
+.card-candle-timer {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; margin-bottom: 8px;
+  background: var(--bg3); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); font-family: 'DM Mono', monospace;
+  font-size: 11px; color: var(--text3);
+}
+.card-candle-timer .ctv { font-weight: 600; font-size: 13px; color: var(--text); min-width: 36px; }
+.card-candle-timer .ctp { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.card-candle-timer .ctf { height: 100%; border-radius: 2px; background: var(--green); transition: width 1s linear, background 0.3s; }
 .sig-filter-label { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
 
 .sig-status { padding: 14px 16px; border-radius: var(--radius-sm); font-size: 13px; font-family: 'DM Mono', monospace; margin-bottom: 1rem; }
@@ -1239,6 +1292,26 @@ nav {
   <div class="signals-page">
     <div class="signals-heading">Top <span>Signals</span></div>
     <div class="signals-sub">Live USDT perp data from Bybit — top 24h gainers ranked by % move. Signals over 30% show FADE entry levels.</div>
+
+    <!-- Candle timer bar -->
+    <div class="candle-timer-bar">
+      <div class="candle-timer-block">
+        <div class="candle-timer-label">Next 15m close</div>
+        <div class="candle-timer-val ok" id="ctimer-val">—:——</div>
+      </div>
+      <div class="candle-timer-progress">
+        <div class="candle-timer-fill ok" id="ctimer-fill" style="width:100%"></div>
+      </div>
+      <div class="candle-timer-block" style="text-align:right">
+        <div class="candle-timer-label">Candle</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)" id="ctimer-candle">—</div>
+      </div>
+      <button class="alarm-btn" id="alarm-btn" onclick="toggleAlarm()">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Alarm off
+      </button>
+    </div>
+
     <div class="signals-controls">
       <button class="refresh-btn" id="refresh-btn" onclick="fetchSignals()">
         <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -3261,6 +3334,11 @@ function buildSignalCard(t, isSignal, volData) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         View 15m Chart
       </button>
+      <div class="card-candle-timer" id="cct-${t.symbol}">
+        <span style="color:var(--text3)">15m closes in</span>
+        <span class="ctv" id="cct-val-${t.symbol}">—</span>
+        <div class="ctp"><div class="ctf" id="cct-fill-${t.symbol}" style="width:100%"></div></div>
+      </div>
       <div class="sig-chart-panel" id="${chartPanelId}">
         <div class="sig-chart-loading">
           <div class="spinner" style="border-color:rgba(74,158,255,0.2);border-top-color:var(--blue)"></div>
@@ -3285,6 +3363,142 @@ function useSignalInCalc(symbol, price, gain) {
   document.getElementById('page-calc')?.scrollTo(0, 0);
   window.scrollTo(0, 0);
 }
+// ── CANDLE TIMER & ALARM ─────────────────────────────────────────────────
+
+let alarmArmed = false;
+let alarmAudioCtx = null;
+let candleTimerInterval = null;
+let lastCandleMinute = null; // tracks last :00/:15/:30/:45 we fired alarm on
+
+function getSecondsToNextCandle() {
+  const now = new Date();
+  const seconds = now.getSeconds();
+  const minutes = now.getMinutes();
+  const mIn15 = minutes % 15;
+  const remaining = (14 - mIn15) * 60 + (59 - seconds);
+  return remaining; // 0–899
+}
+
+function fmt15mTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function getUrgencyClass(secs) {
+  if (secs <= 30) return 'urgent';
+  if (secs <= 60) return 'soon';
+  return 'ok';
+}
+
+function getCandleLabel() {
+  const now = new Date();
+  // Next close = current 15m slot end
+  const close = new Date(now);
+  const mIn15 = close.getMinutes() % 15;
+  close.setMinutes(close.getMinutes() + (14 - mIn15));
+  close.setSeconds(59);
+  const h = close.getHours();
+  const m = close.getMinutes();
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} close`;
+}
+
+function tickCandleTimer() {
+  const secs = getSecondsToNextCandle();
+  const pct = (secs / 899) * 100;
+  const cls = getUrgencyClass(secs);
+  const timeStr = fmt15mTime(secs);
+
+  // Main timer bar
+  const val = document.getElementById('ctimer-val');
+  const fill = document.getElementById('ctimer-fill');
+  const candle = document.getElementById('ctimer-candle');
+  if (val) {
+    val.textContent = timeStr;
+    val.className = `candle-timer-val ${cls}`;
+  }
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.className = `candle-timer-fill ${cls}`;
+  }
+  if (candle) candle.textContent = getCandleLabel();
+
+  // Per-card mini timers — update all at once
+  document.querySelectorAll('[id^="cct-val-"]').forEach(el => {
+    el.textContent = timeStr;
+    el.className = `ctv ${cls === 'urgent' ? 'red' : cls === 'soon' ? 'yellow' : ''}`;
+    el.style.color = cls === 'urgent' ? 'var(--red)' : cls === 'soon' ? 'var(--yellow)' : 'var(--text)';
+  });
+  document.querySelectorAll('[id^="cct-fill-"]').forEach(el => {
+    el.style.width = pct + '%';
+    el.style.background = cls === 'urgent' ? 'var(--red)' : cls === 'soon' ? 'var(--yellow)' : 'var(--green)';
+  });
+
+  // Alarm — fires when we tick over to a new candle (secs resets to ~899)
+  const now = new Date();
+  const currentSlot = Math.floor(now.getMinutes() / 15); // 0,1,2,3
+  if (alarmArmed && lastCandleMinute !== null && currentSlot !== lastCandleMinute) {
+    fireAlarm();
+  }
+  lastCandleMinute = currentSlot;
+}
+
+function startCandleTimer() {
+  if (candleTimerInterval) clearInterval(candleTimerInterval);
+  tickCandleTimer(); // immediate first tick
+  candleTimerInterval = setInterval(tickCandleTimer, 1000);
+  // Also init lastCandleMinute
+  lastCandleMinute = Math.floor(new Date().getMinutes() / 15);
+}
+
+function toggleAlarm() {
+  alarmArmed = !alarmArmed;
+  const btn = document.getElementById('alarm-btn');
+  if (!btn) return;
+
+  if (alarmArmed) {
+    // Unlock audio context on user gesture
+    if (!alarmAudioCtx) {
+      alarmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    btn.classList.add('armed');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Alarm on`;
+    // Play a soft test beep so they know it's armed
+    playBeep(440, 0.08, 0.15);
+  } else {
+    btn.classList.remove('armed');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Alarm off`;
+  }
+}
+
+function fireAlarm() {
+  // Three short beeps
+  playBeep(880, 0.3, 0.12);
+  setTimeout(() => playBeep(880, 0.3, 0.12), 180);
+  setTimeout(() => playBeep(1040, 0.4, 0.2), 360);
+  // Vibrate on mobile (pattern: buzz-pause-buzz-pause-buzz)
+  if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200]);
+}
+
+function playBeep(freq, vol, dur) {
+  if (!alarmAudioCtx) return;
+  try {
+    const osc = alarmAudioCtx.createOscillator();
+    const gain = alarmAudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(alarmAudioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, alarmAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, alarmAudioCtx.currentTime + dur);
+    osc.start(alarmAudioCtx.currentTime);
+    osc.stop(alarmAudioCtx.currentTime + dur);
+  } catch (e) { /* silence audio errors */ }
+}
+
+// Start timer immediately and keep it running always
+startCandleTimer();
+
 // ── TRADINGVIEW CHART ─────────────────────────────────────────────────────
 
 function toggleChart(symbol, coin) {
