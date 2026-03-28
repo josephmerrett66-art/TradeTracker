@@ -2362,9 +2362,18 @@ function renderTrades() {
       ? `<span style="font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:100px;background:rgba(61,214,140,0.15);color:var(--green);border:1px solid rgba(61,214,140,0.3);margin-left:4px">LIVE</span>`
       : `<span style="font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:100px;background:var(--bg4);color:var(--text3);border:1px solid var(--border);margin-left:4px">DEMO</span>`;
     const timeTag = t.signal_time ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)"> · ⏰${t.signal_time}</span>` : '';
-    const shotHtml = hasShot ? `<div class="tr-screenshot" id="ss-${t.id}" style="display:block;padding:0 1.25rem 1rem;">
-      <img src="${t.screenshot}" onclick="openLightbox('${t.id}')" title="Click to enlarge" />
-    </div>` : `<div class="tr-screenshot" id="ss-${t.id}"></div>`;
+    const shotHtml = hasShot ? `
+      <div class="trade-journal-wrap" style="border-top:1px solid var(--border)">
+        <button class="trade-journal-toggle has-note" onclick="toggleScreenshot(${t.id}, this)">
+          <span>📷 Screenshot</span>
+          <span style="font-size:9px">▾</span>
+        </button>
+        <div class="trade-journal-body" id="ss-body-${t.id}">
+          <div style="padding:0 0 10px">
+            <img src="${t.screenshot}" onclick="openLightbox('${t.id}')" title="Click to enlarge" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);display:block;cursor:pointer" />
+          </div>
+        </div>
+      </div>` : `<div id="ss-${t.id}"></div>`;
     const posSize = t.position_size ? ` · $${t.position_size.toLocaleString()}` : '';
 
     // Live price row — only for entered trades
@@ -3050,6 +3059,15 @@ window.addEventListener('error', e => {
 });
 
 // ── TRADE JOURNAL (inline per trade) ──────────────────────────────────────
+
+function toggleScreenshot(id, btn) {
+  const body = document.getElementById(`ss-body-${id}`);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  const arrow = btn.querySelector('span:last-child');
+  if (arrow) arrow.textContent = isOpen ? '▾' : '▴';
+}
 
 function toggleJournal(id, btn) {
   const body = document.getElementById('tj-' + id);
