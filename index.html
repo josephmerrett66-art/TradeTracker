@@ -1093,6 +1093,36 @@ nav {
 .sig-grade.C { background: var(--yellow-dim); color: var(--yellow); border: 2px solid var(--yellow-border); }
 .sig-grade.D { background: var(--red-dim); color: var(--red); border: 2px solid rgba(255,82,82,0.3); }
 .sig-grade-reason { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+/* Log from signal button */
+.sig-log-btn {
+  margin-top: 8px; width: 100%; padding: 10px;
+  border-radius: var(--radius-sm); border: 1px solid rgba(61,214,140,0.35);
+  background: var(--green-dim); color: var(--green);
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.sig-log-btn:hover { background: var(--green); color: #0C0C0E; }
+.edit-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 2px 6px; border-radius: 6px; line-height: 1; font-family: 'DM Mono', monospace; transition: all 0.15s; }
+.edit-btn:hover { color: var(--blue); background: var(--blue-dim); }
+.edit-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; padding: 1rem; }
+.edit-modal-overlay.open { display: flex; }
+.edit-modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.5rem; width: 560px; max-width: 96vw; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+.edit-modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+.edit-modal-coin { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--yellow); margin-top: -8px; }
+.edit-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.edit-field { display: flex; flex-direction: column; gap: 5px; }
+.edit-field label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; font-family: 'DM Mono', monospace; }
+.edit-field input, .edit-field select { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); font-size: 14px; height: 40px; border-radius: var(--radius-sm); padding: 0 10px; font-family: 'DM Mono', monospace; width: 100%; transition: border-color 0.15s; }
+.edit-field input:focus, .edit-field select:focus { outline: none; border-color: var(--blue); }
+.edit-field select option { background: var(--bg3); }
+.edit-field textarea { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); font-size: 13px; border-radius: var(--radius-sm); padding: 8px 10px; font-family: 'DM Sans', sans-serif; width: 100%; resize: none; height: 70px; outline: none; line-height: 1.6; transition: border-color 0.15s; }
+.edit-field textarea:focus { border-color: var(--blue); }
+.edit-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+.edit-save-btn { padding: 10px 24px; border-radius: var(--radius-sm); background: var(--blue); color: #fff; border: none; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.edit-save-btn:hover { background: #3a8eef; }
+.edit-cancel-btn { padding: 10px 18px; border-radius: var(--radius-sm); background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.edit-cancel-btn:hover { background: var(--bg4); color: var(--text); }
 </style>
 </head>
 <body>
@@ -1113,6 +1143,53 @@ nav {
       <button class="modal-btn" onclick="closeImport()">Cancel</button>
       <button class="modal-btn confirm" id="import-merge-btn" onclick="confirmImport('merge')" disabled>Merge</button>
       <button class="modal-btn confirm" id="import-replace-btn" onclick="confirmImport('replace')" disabled style="background:var(--yellow);border-color:var(--yellow);color:#0C0C0E">Replace All</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TRADE MODAL -->
+<div class="edit-modal-overlay" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal">
+    <div class="edit-modal-title">Edit Trade</div>
+    <div class="edit-modal-coin" id="edit-modal-coin"></div>
+    <div class="edit-field-grid">
+      <div class="edit-field"><label>Outcome</label>
+        <select id="e-outcome">
+          <option value="watching">Watching</option>
+          <option value="fullwin">Full Win</option>
+          <option value="partwin">Partial Win</option>
+          <option value="partloss">Partial Loss</option>
+          <option value="stopped">Stopped Out</option>
+          <option value="neverentered">Never Entered</option>
+        </select>
+      </div>
+      <div class="edit-field"><label>Mode</label>
+        <select id="e-mode">
+          <option value="demo">Demo</option>
+          <option value="live">Live</option>
+        </select>
+      </div>
+      <div class="edit-field"><label>Entry $</label><input id="e-entry" type="number" step="any" oninput="editAutoCalc()" /></div>
+      <div class="edit-field"><label>Exit $</label><input id="e-exit" type="number" step="any" oninput="editAutoCalc()" /></div>
+      <div class="edit-field"><label>Position Size $</label><input id="e-pos-size" type="number" step="any" oninput="editAutoCalc()" /></div>
+      <div class="edit-field"><label>P&L $</label><input id="e-pnl" type="number" step="any" placeholder="auto" readonly style="color:var(--text2);cursor:default" /></div>
+      <div class="edit-field"><label>P&L %</label><input id="e-pct" type="number" readonly style="color:var(--text2);cursor:default" placeholder="auto" /></div>
+      <div class="edit-field"><label>24h Gain %</label><input id="e-gain" type="number" step="any" /></div>
+      <div class="edit-field"><label>Signal Time</label><input id="e-signal-time" type="time" /></div>
+      <div class="edit-field"><label>Close Reason</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px">
+          <button type="button" class="cr-btn" id="e-cr-target" onclick="editToggleCR('target')">🎯 Hit Target</button>
+          <button type="button" class="cr-btn" id="e-cr-time" onclick="editToggleCR('time')">⏱ Time Stopped</button>
+        </div>
+      </div>
+    </div>
+    <div class="edit-field" style="grid-column:span 2">
+      <label>Trade Notes</label>
+      <textarea id="e-trade-notes" placeholder="Entry reasoning, market conditions, how you felt..."></textarea>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+      <button class="edit-save-btn" onclick="saveEdit()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -2282,6 +2359,7 @@ function renderTrades() {
             <input type="file" accept="image/*" style="display:none" onchange="attachScreenshot(${t.id}, this)" />
           </label>
           ${hasShot ? `<button class="ss-btn" onclick="removeScreenshot(${t.id})" style="font-size:10px;padding:3px 7px;color:var(--text3)">✕</button>` : ''}
+          <button class="edit-btn" onclick="openEditModal(${t.id})" title="Edit trade">✎</button>
           <button class="del-btn" onclick="deleteTrade(${t.id})" style="margin-top:2px">×</button>
         </div>
       </div>
@@ -3304,7 +3382,14 @@ function buildSignalCard(t, isSignal, volData) {
         </div>
         <div class="sig-level-row"><span class="sig-level-label">R:R</span><span class="sig-level-val" style="color:${rr>=1?'var(--green)':'var(--red)'}">${rr.toFixed(2)}R</span></div>
       </div>`;
-    useBtnHtml = `<button class="sig-use-btn" onclick="useSignalInCalc('${coin}USDT', ${price.toFixed(8)}, ${gainPct.toFixed(2)})">→ Open in Calculator</button>`;
+    useBtnHtml = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <button class="sig-use-btn" style="margin-top:0" onclick="useSignalInCalc('${coin}USDT', ${price.toFixed(8)}, ${gainPct.toFixed(2)})">→ Calculator</button>
+        <button class="sig-log-btn" style="margin-top:0" onclick="logTradeFromSignal('${t.symbol}', ${price.toFixed(8)}, ${gainPct.toFixed(2)}, ${entry.toFixed(8)})">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Log Trade
+        </button>
+      </div>`;
   }
 
   const cardId = `card-${t.symbol}`;
@@ -3498,6 +3583,141 @@ function playBeep(freq, vol, dur) {
 
 // Start timer immediately and keep it running always
 startCandleTimer();
+
+// ── LOG TRADE FROM SIGNAL ─────────────────────────────────────────────────
+
+function logTradeFromSignal(symbol, price, gainPct, entry) {
+  // Pre-fill the log form and switch to the log page
+  showPage('log');
+  document.querySelectorAll('.nav-tab').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick')?.includes("'log'"));
+  });
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  document.getElementById('m-coin').value = symbol;
+  document.getElementById('m-entry').value = entry.toFixed(8);
+  document.getElementById('m-gain').value = gainPct.toFixed(2);
+  document.getElementById('m-signal-time').value = timeStr;
+  document.getElementById('m-outcome').value = 'watching';
+  document.getElementById('m-mode').value = 'demo';
+  // Clear exit/pnl ready for later update
+  document.getElementById('m-exit').value = '';
+  document.getElementById('m-pnl').value = '';
+  document.getElementById('m-pct').value = '';
+  document.getElementById('m-pct').style.color = 'var(--text2)';
+  document.getElementById('m-pnl').style.color = 'var(--text2)';
+  // Scroll form into view
+  window.scrollTo(0, 0);
+  document.getElementById('m-coin').focus();
+}
+
+// ── EDIT TRADE MODAL ──────────────────────────────────────────────────────
+
+let editingTradeId = null;
+let editCR = null;
+
+function openEditModal(id) {
+  const t = trades.find(t => t.id === id);
+  if (!t) return;
+  editingTradeId = id;
+  editCR = t.close_reason ?? null;
+
+  document.getElementById('edit-modal-coin').textContent = t.coin + ' · ' + t.date;
+  document.getElementById('e-outcome').value = t.outcome || 'watching';
+  document.getElementById('e-mode').value = t.mode || 'demo';
+  document.getElementById('e-entry').value = t.entry ?? '';
+  document.getElementById('e-exit').value = t.exit ?? '';
+  document.getElementById('e-pos-size').value = t.position_size ?? '';
+  document.getElementById('e-gain').value = t.gain_24h ?? '';
+  document.getElementById('e-signal-time').value = t.signal_time ?? '';
+  document.getElementById('e-trade-notes').value = t.trade_notes ?? '';
+
+  // Auto-calc P&L display
+  editAutoCalc();
+
+  // Close reason buttons
+  document.getElementById('e-cr-target').className = editCR === 'target' ? 'cr-btn active-target' : 'cr-btn';
+  document.getElementById('e-cr-time').className   = editCR === 'time'   ? 'cr-btn active-time'   : 'cr-btn';
+
+  document.getElementById('edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  editingTradeId = null;
+  editCR = null;
+}
+
+function editToggleCR(val) {
+  editCR = editCR === val ? null : val;
+  document.getElementById('e-cr-target').className = editCR === 'target' ? 'cr-btn active-target' : 'cr-btn';
+  document.getElementById('e-cr-time').className   = editCR === 'time'   ? 'cr-btn active-time'   : 'cr-btn';
+}
+
+function editAutoCalc() {
+  const entry   = parseFloat(document.getElementById('e-entry').value);
+  const exit    = parseFloat(document.getElementById('e-exit').value);
+  const posSize = parseFloat(document.getElementById('e-pos-size').value);
+  const pctEl   = document.getElementById('e-pct');
+  const pnlEl   = document.getElementById('e-pnl');
+
+  if (entry && exit && entry > 0) {
+    const pct = ((entry - exit) / entry * 100);
+    pctEl.value = pct.toFixed(3);
+    pctEl.style.color = pct >= 0 ? 'var(--green)' : 'var(--red)';
+    if (posSize && posSize > 0) {
+      const dollar = (pct / 100) * posSize;
+      pnlEl.value = dollar.toFixed(2);
+      pnlEl.style.color = dollar >= 0 ? 'var(--green)' : 'var(--red)';
+    } else {
+      pnlEl.value = '';
+      pnlEl.style.color = 'var(--text2)';
+    }
+  } else {
+    pctEl.value = ''; pctEl.style.color = 'var(--text2)';
+    pnlEl.value = ''; pnlEl.style.color = 'var(--text2)';
+  }
+}
+
+function saveEdit() {
+  const t = trades.find(t => t.id === editingTradeId);
+  if (!t) return;
+
+  const entry   = parseFloat(document.getElementById('e-entry').value) || null;
+  const exit    = parseFloat(document.getElementById('e-exit').value) || null;
+  const posSize = parseFloat(document.getElementById('e-pos-size').value) || null;
+
+  let pct_pnl = null;
+  let pnl = null;
+  if (entry && exit && entry > 0) {
+    pct_pnl = parseFloat(((entry - exit) / entry * 100).toFixed(3));
+    if (posSize) pnl = parseFloat(((pct_pnl / 100) * posSize).toFixed(2));
+  }
+  // Allow manual pnl override if auto couldn't calc
+  const manualPnl = parseFloat(document.getElementById('e-pnl').value);
+  if (pnl === null && !isNaN(manualPnl) && document.getElementById('e-pnl').value !== '') {
+    pnl = manualPnl;
+  }
+
+  t.outcome      = document.getElementById('e-outcome').value;
+  t.mode         = document.getElementById('e-mode').value;
+  t.entry        = entry;
+  t.exit         = exit;
+  t.position_size = posSize;
+  t.pct_pnl      = pct_pnl;
+  t.pnl          = pnl;
+  t.gain_24h     = parseFloat(document.getElementById('e-gain').value) || null;
+  t.signal_time  = document.getElementById('e-signal-time').value || null;
+  t.close_reason = editCR;
+  t.trade_notes  = document.getElementById('e-trade-notes').value.trim();
+
+  save();
+  renderTrades();
+  closeEditModal();
+}
 
 // ── TRADINGVIEW CHART ─────────────────────────────────────────────────────
 
